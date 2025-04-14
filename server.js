@@ -8,7 +8,9 @@ const admin = require("firebase-admin");
 const OpenAI = require("openai");
 
 // 🔥 Initialize Firebase
-const serviceAccount = require("./fc25assistant-firebase-adminsdk-fbsvc-5f82046f38.json");
+const adminKeyBuffer = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64, 'base64');
+const serviceAccount = JSON.parse(adminKeyBuffer.toString('utf-8'));
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -165,4 +167,6 @@ Question: "${userMessage}"`;
   }
 });
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🔥 Server running on port ${PORT}`));
+

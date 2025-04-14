@@ -1,3 +1,6 @@
 node_modules/
 .env
+# Ignore all JSON files...
 *.json
+# ...except the Firebase admin SDK file
+!fc25assistant-firebase-adminsdk-fbsvc-5f82046f38.json
