@@ -108,38 +108,6 @@ Question: "${userMessage}"`;
     console.log("✅ OpenAI Response:", openaiResponse.data);
     const answer = openaiResponse.data.choices[0].message.content;
 
-    // --- Step 2: If VIP, generate TTS audio ---
-    let audio_url = null;
-    if (isVIP) {
-      try {
-        console.log("🔹 Generating TTS audio for VIP...");
-        const ttsRequestData = {
-          model: "tts-1",
-          input: answer,
-          voice: "alloy"
-        };
-
-        const ttsResponse = await axios.post(
-          "https://api.openai.com/v1/audio/speech",
-          ttsRequestData,
-          {
-            headers: {
-              "Authorization": `Bearer ${process.env.OPENAI_API_KEY.trim()}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (ttsResponse.data && ttsResponse.data.audio_url) {
-          audio_url = ttsResponse.data.audio_url;
-          console.log("✅ TTS Audio URL:", audio_url);
-        } else {
-          console.error("❌ No audio URL returned from OpenAI TTS API");
-        }
-      } catch (ttsError) {
-        console.error("❌ TTS API Error:", ttsError.response ? ttsError.response.data : ttsError.message);
-      }
-    }
 
     // --- Step 3: Store the new AI response in Firestore ---
     const docRef = db.collection("ai_answers").doc(userMessage);
@@ -155,7 +123,7 @@ Question: "${userMessage}"`;
     res.json({
       answer: answer,
       tokens_used: openaiResponse.data.usage.total_tokens,
-      audio_url: audio_url,
+      audio_url: null
     });
   } catch (error) {
     const detailedError = error.response ? error.response.data : error.message;
