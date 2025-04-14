@@ -114,7 +114,6 @@ Question: "${userMessage}"`;
     await docRef.set({
       question: userMessage,
       answer: answer,
-      audio_url: audio_url || null,
       embedding: newQuestionEmbedding,
       createdAt: admin.firestore.Timestamp.now(),
     });
