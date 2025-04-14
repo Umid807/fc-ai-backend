@@ -123,7 +123,6 @@ Question: "${userMessage}"`;
     res.json({
       answer: answer,
       tokens_used: openaiResponse.data.usage.total_tokens,
-      audio_url: null
     });
   } catch (error) {
     const detailedError = error.response ? error.response.data : error.message;
