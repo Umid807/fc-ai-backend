@@ -1,5 +1,6 @@
 require('dotenv').config();
 console.log("🔑 OpenAI API Key:", process.env.OPENAI_API_KEY ? "Loaded ✅" : "Not Loaded ❌");
+console.log("🔑 DeepL API Key:", process.env.DEEPL_API_KEY ? "Loaded ✅" : "Not Loaded ❌");
 
 const express = require("express");
 const cors = require("cors");
@@ -133,6 +134,110 @@ Question: "${userMessage}"`;
   }
 });
 
+// ================================================================
+// NEW: DeepL Translation Endpoint
+// ================================================================
+app.post("/api/translate", async (req, res) => {
+  try {
+    const { text, targetLanguage, sourceLanguage = 'EN' } = req.body;
+    
+    // Input validation
+    if (!text || !targetLanguage) {
+      return res.status(400).json({ 
+        error: "Text and target language are required" 
+      });
+    }
+
+    if (text.length > 5000) {
+      return res.status(400).json({ 
+        error: "Text too long (max 5000 characters)" 
+      });
+    }
+
+    console.log("🌐 Translation request:", { 
+      textLength: text.length, 
+      targetLanguage, 
+      sourceLanguage 
+    });
+
+    // Call DeepL API
+    const response = await axios.post(
+      'https://api-free.deepl.com/v2/translate', 
+      new URLSearchParams({
+        text: text,
+        target_lang: targetLanguage,
+        source_lang: sourceLanguage,
+        preserve_formatting: '1',
+        formality: 'default'
+      }), 
+      {
+        headers: {
+          'Authorization': `DeepL-Auth-Key ${process.env.DEEPL_API_KEY}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'FC25Locker/1.0',
+        },
+        timeout: 10000 // 10 second timeout
+      }
+    );
+
+    console.log("✅ DeepL Response received");
+
+    if (!response.data.translations || !response.data.translations[0]) {
+      throw new Error("Invalid translation response format");
+    }
+
+    const translatedText = response.data.translations[0].text;
+
+    // Log success
+    console.log("✅ Translation completed successfully");
+
+    res.json({
+      translatedText: translatedText,
+      sourceLanguage: response.data.translations[0].detected_source_language || sourceLanguage,
+      usage: {
+        character_count: response.data.translations[0].text.length
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Translation error:", error.response ? error.response.data : error.message);
+    
+    // Handle specific DeepL errors
+    let errorMessage = "Translation failed";
+    let statusCode = 500;
+
+    if (error.response) {
+      switch (error.response.status) {
+        case 400:
+          errorMessage = "Invalid translation request";
+          statusCode = 400;
+          break;
+        case 403:
+          errorMessage = "Translation service authentication failed";
+          statusCode = 403;
+          break;
+        case 429:
+          errorMessage = "Translation rate limit exceeded";
+          statusCode = 429;
+          break;
+        case 456:
+          errorMessage = "Translation quota exceeded";
+          statusCode = 456;
+          break;
+        default:
+          errorMessage = `Translation service error (${error.response.status})`;
+          statusCode = error.response.status;
+      }
+    } else if (error.code === 'ECONNABORTED') {
+      errorMessage = "Translation request timed out";
+      statusCode = 408;
+    }
+
+    res.status(statusCode).json({
+      error: errorMessage,
+      details: error.response ? error.response.data : error.message,
+    });
+  }
+});
 
 app.listen(PORT, () => console.log(`🔥 Server running on port ${PORT}`));
-
