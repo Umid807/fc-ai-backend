@@ -1,0 +1,132 @@
+📋 COMPREHENSIVE ISSUE LIST + NEW REQUIREMENTS
+
+🚨 CRITICAL FIXES REQUIRED
+1. VIP Status Consistency (HIGH PRIORITY)
+
+Issue: Multiple different VIP checks (currentUser?.vip, currentUser?.isVIP, currentUser?.VIP)
+Fix: Standardize to single property throughout entire file
+Impact: Prevents VIP features from failing randomly
+
+2. Animation Memory Leaks
+
+Issue: stopAnimation() doesn't fully clean up listeners, potential memory leaks
+Fix: Proper animation cleanup with value resets in useEffect cleanup
+Impact: Prevents app slowdown and crashes
+
+3. Async Race Conditions
+
+Issue: State updates before async draft restoration completes
+Fix: Proper async/await chaining and synchronous state management
+Impact: Prevents UI glitches and data corruption
+
+
+⚠️ MAJOR FIXES REQUIRED
+4. Draft Management Safety
+
+Issue: No error handling for malformed localStorage data, can crash app
+Fix: Add try-catch blocks, data validation, and graceful error recovery
+Impact: Prevents app crashes from corrupted drafts
+
+5. User Authentication Edge Cases
+
+Issue: Loading states not reset on early returns, leaves UI in broken state
+Fix: Wrap all async operations in try-catch-finally with proper state cleanup
+Impact: Ensures UI always returns to usable state
+
+6. AsyncStorage Synchronization
+
+Issue: Multiple storage operations without coordination or error handling
+Fix: Add atomic operations, error boundaries, and transaction-like behavior
+Impact: Prevents data corruption and storage conflicts
+
+
+🔧 TECHNICAL DEBT FIXES
+7. Overly Complex State Management
+
+Issue: Single massive state object with 18 properties is unmaintainable
+Fix: Break into logical sub-states using useReducer pattern
+Impact: Easier maintenance, better performance, fewer bugs
+
+8. Missing TypeScript Safety
+
+Issue: Firebase data lacks proper typing, potential runtime errors
+Fix: Add comprehensive interfaces and type guards for all data
+Impact: Catch errors at compile time, better developer experience
+
+9. Performance Issues
+
+Issue: Large dependency arrays cause excessive re-renders
+Fix: Split large useMemos into smaller, focused ones
+Impact: Better performance, smoother animations
+
+
+🎨 UX/UI FIXES REQUIRED
+10. Error Message Inconsistency
+
+Issue: Mix of translated and hardcoded error messages
+Fix: Standardize all user-facing text to use i18n translations
+Impact: Consistent user experience, proper localization
+
+11. Mobile Accessibility Issues
+
+Issue: No accessibility labels, small touch targets, no screen reader support
+Fix: Add comprehensive accessibility support throughout
+Impact: App usable by users with disabilities, better App Store ratings
+
+12. Keyboard Handling
+
+Issue: No keyboard dismissal, poor positioning during input
+Fix: Proper keyboard management and UI adjustments
+Impact: Better mobile typing experience
+
+
+🛡️ SECURITY FIXES REQUIRED
+13. Content Validation Bypass
+
+Issue: allowEmpty sections bypass security validation
+Fix: Always validate non-empty content regardless of flags
+Impact: Prevents malicious content injection
+
+14. Draft Data Injection
+
+Issue: No sanitization of localStorage data before use
+Fix: Validate and sanitize all draft data before restoration
+Impact: Prevents malicious data corruption
+
+
+🆕 NEW UI/UX REQUIREMENTS
+15. Simple Mode Redesign (MAJOR CHANGE)
+Current Problem: Simple mode has too many features, defeats the purpose
+New Requirements:
+
+✅ KEEP: Title input, main content textbox, grouped toolbar with full styling, GIF selector
+❌ REMOVE: Media uploader, poll creator, template selector
+❌ REMOVE: All action buttons except preview
+❌ REMOVE: Privacy toggle (move to advanced)
+Goal: True simplicity - just text creation with rich styling options
+
+16. Advanced Mode Enhancement
+New Requirements:
+
+✅ ALL CURRENT FEATURES: Media, polls, templates, privacy, etc.
+✅ MULTIMEDIA SECTIONS: Quote, image, table, video, poll sections
+✅ PROFESSIONAL TOOLS: Complete content creation studio
+Goal: Power users get everything, simple users aren't overwhelmed
+
+17. Toggle Button Clarity (CRITICAL UX)
+Current Problem: Confusing icon-only button, users don't understand
+New Requirements:
+
+✅ Clear Text Labels: "Switch to Advanced Mode" / "Switch to Simple Mode"
+✅ Descriptive Button: Show exactly what mode they'll switch TO
+✅ Better Positioning: Less confusing placement
+✅ Visual Clarity: User should instantly understand what button does
+
+18. Premium Styling Overhaul
+Current Problem: Elevation shadows look cheap and dated
+New Requirements:
+
+❌ REMOVE ALL: elevation, shadowOffset, shadowOpacity, shadowRadius
+✅ REPLACE WITH: Clean gradients, subtle borders, modern spacing
+✅ PREMIUM AESTHETIC: Sleek, flat design with gaming RGB accents
+✅ CONSISTENCY: All elements follow same premium design language

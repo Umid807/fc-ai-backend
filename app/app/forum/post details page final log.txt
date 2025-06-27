@@ -1,0 +1,964 @@
+# FC25 Locker Production Standards & Engineering Guide
+
+## 🏆 **PRODUCTION EXCELLENCE CRITERIA**
+
+**Based on PostDetails Page Achievement - Score: 9.2/10**
+
+This document establishes the engineering standards, security measures, UX/UI principles, and architectural patterns that define production-ready code for FC25 Locker. Use this as the benchmark for all future development.
+
+---
+
+## 🛡️ **SECURITY ARCHITECTURE (ENTERPRISE-GRADE)**
+
+### **Input Validation & Sanitization**
+```typescript
+// MANDATORY: All user inputs must go through validation pipeline
+const validation = validateCommentContent(trimmedInput);
+if (!validation.isValid) {
+  secureLog('Invalid content', { errors: validation.errors, userId: currentUser.uid });
+  showFeedback(validation.errors[0] || 'Invalid content');
+  return;
+}
+
+// REQUIRED: Use sanitized content
+const sanitizedData = {
+  text: validation.sanitizedContent,  // Never use raw input
+  userId: currentUser.uid,
+  username: sanitizeUsername(currentUser.displayName || 'Anonymous'),
+  userAvatar: sanitizeURL(currentUser.photoURL || '') || '',
+};
+```
+
+### **XSS Protection Standards**
+```typescript
+// MANDATORY: Sanitize all display content
+import { sanitizeMentions, sanitizeCommentText, sanitizeURL } from '../utils/security';
+
+// For user-generated content display
+const processedContent = sanitizeCommentText(content);
+const safeMentions = sanitizeMentions(text);
+
+// For URLs and media
+const safeAvatar = sanitizeURL(userAvatar) || fallbackImage;
+```
+
+### **Rate Limiting & Spam Protection**
+```typescript
+// REQUIRED: Implement rate limiting for all user actions
+const canSubmit = checkRateLimit(`action_${userId}`, maxActions, timeWindow);
+if (!canSubmit) {
+  showFeedback(`Too many attempts. Please wait ${timeRemaining} seconds.`, 4000);
+  return;
+}
+
+// MANDATORY: Spam pattern detection
+if (hasSpamPatterns(content)) {
+  secureLog('Spam detected', { content: content.substring(0, 100), userId });
+  showFeedback('Content appears to be spam and was blocked');
+  return;
+}
+```
+
+### **Secure Logging Standards**
+```typescript
+// MANDATORY: Use secure logging for security events
+secureLog('Security event type', { 
+  errorType: 'validation_failed',
+  userId: currentUser.uid,
+  timestamp: Date.now(),
+  metadata: { /* relevant data */ }
+});
+```
+
+---
+
+## 🏗️ **ARCHITECTURAL STANDARDS**
+
+### **State Management Pattern**
+```typescript
+// REQUIRED: Context-aware state management
+const [emojiTarget, setEmojiTarget] = useState<'main' | string>('main');
+const [replyStates, setReplyStates] = useState<{[id: string]: string}>({});
+
+// MANDATORY: Managed state functions
+const updateReplyText = useCallback((id: string, text: string) => {
+  setReplyStates(prev => ({ ...prev, [id]: text }));
+}, []);
+
+const clearReplyText = useCallback((id: string) => {
+  setReplyStates(prev => {
+    const newState = { ...prev };
+    delete newState[id];
+    return newState;
+  });
+}, []);
+```
+
+### **Memory Management Standards**
+```typescript
+// MANDATORY: Cleanup patterns
+const isMountedRef = useRef(true);
+const unsubscribeRef = useRef<(() => void)[]>([]);
+
+const cleanupListeners = useCallback(() => {
+  unsubscribeRef.current.forEach((unsubscribe) => {
+    try {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    } catch (error) {
+      // Silent error handling
+    }
+  });
+  unsubscribeRef.current = [];
+}, []); // CRITICAL: Empty dependency array
+
+// REQUIRED: Proper cleanup in useEffect
+useEffect(() => {
+  isMountedRef.current = true;
+  // Setup logic
+  
+  return () => {
+    isMountedRef.current = false;
+    cleanupListeners();
+  };
+}, [fetchData]); // STABLE dependencies only
+```
+
+### **Performance Optimization Patterns**
+```typescript
+// MANDATORY: Debounced user actions
+const handleAction = useCallback(
+  debounce(async () => {
+    // Action logic
+  }, DEBOUNCE_MS),
+  [dependencies] // Stable dependencies
+);
+
+// REQUIRED: Memoized expensive operations
+const sortedData = useMemo(() => {
+  if (!data.length) return [];
+  return [...data].sort(sortFunction);
+}, [data, sortMethod]);
+
+// MANDATORY: Virtualized lists for large datasets
+<FlatList
+  data={items}
+  renderItem={renderItem}
+  initialNumToRender={40}
+  maxToRenderPerBatch={20}
+  windowSize={10}
+  removeClippedSubviews={true}
+  getItemLayout={getItemLayout}
+/>
+```
+
+---
+
+## 🎨 **UI/UX STANDARDS**
+
+### **Visual Design System**
+```typescript
+// MANDATORY: Gaming color palette
+const gameTheme = {
+  primary: '#00FFFF',      // Neon cyan
+  secondary: '#6A5ACD',    // Slate blue  
+  accent: '#FFD700',       // Gold
+  danger: '#FF6347',       // Tomato red
+  success: '#32CD32',      // Lime green
+  gradients: {
+    primary: ['#00FFFF', '#6A5ACD'],
+    background: ['#000', '#0a0a0a', '#1a1a2e', '#16213e'],
+    danger: ['#FF6347', '#FF4500'],
+  }
+};
+
+// REQUIRED: Gradient backgrounds for depth
+<LinearGradient
+  colors={gameTheme.gradients.background}
+  style={StyleSheet.absoluteFill}
+  start={{ x: 0, y: 0 }}
+  end={{ x: 1, y: 1 }}
+/>
+```
+
+### **Interactive Feedback Standards**
+```typescript
+// MANDATORY: State-aware user feedback
+const handleUserAction = useCallback(async () => {
+  if (alreadyPerformed) {
+    // Show specific feedback for already-performed actions
+    setToastMessage('Already performed! ✅');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+    return;
+  }
+  
+  // Proceed with action...
+}, [dependencies]);
+
+// REQUIRED: Visual state indicators
+<TouchableOpacity
+  style={[
+    styles.actionButton,
+    isActive && styles.actionButtonActive,
+    !canInteract && styles.actionButtonDisabled,
+  ]}
+  disabled={!canInteract}
+>
+  <Ionicons
+    name={isActive ? "icon-filled" : "icon-outline"}
+    size={24}
+    color={isActive ? "#FF6347" : "#FFD700"}
+  />
+</TouchableOpacity>
+```
+
+### **Gaming-Style Button Standards**
+```typescript
+// REQUIRED: Professional gaming buttons
+const GameButton = ({ onPress, children, disabled }) => (
+  <TouchableOpacity style={styles.gamingButton} onPress={onPress} disabled={disabled}>
+    <View style={styles.gamingButtonBorder}>
+      <LinearGradient
+        colors={['#00FFFF', '#0080FF', '#6A5ACD']}
+        style={styles.gamingButtonGradient}
+      >
+        <View style={styles.gamingButtonContent}>
+          {children}
+        </View>
+      </LinearGradient>
+    </View>
+    <View style={styles.gamingButtonGlow} />
+  </TouchableOpacity>
+);
+
+// MANDATORY: Button styling
+const buttonStyles = {
+  gamingButton: {
+    position: 'relative',
+    minWidth: 200,
+    height: 50,
+  },
+  gamingButtonBorder: {
+    borderRadius: 25,
+    padding: 2,
+    backgroundColor: 'rgba(0, 255, 255, 0.3)',
+  },
+  gamingButtonGradient: {
+    flex: 1,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gamingButtonGlow: {
+    position: 'absolute',
+    top: -2,
+    left: -2,
+    right: -2,
+    bottom: -2,
+    borderRadius: 27,
+    backgroundColor: 'rgba(0, 255, 255, 0.1)',
+    zIndex: -1,
+  }
+};
+```
+
+---
+
+## 🔄 **REAL-TIME DATA MANAGEMENT**
+
+### **Firebase Integration Standards**
+```typescript
+// MANDATORY: Robust listener setup
+const setupRealTimeListeners = useCallback(() => {
+  if (!id || !isMountedRef.current || !currentUser?.uid) return;
+
+  // Clean existing listeners
+  cleanupListeners();
+
+  const unsubscribeList: (() => void)[] = [];
+
+  // Data listener with error handling
+  const dataRef = doc(db, 'collection', id);
+  const dataUnsubscribe = onSnapshot(dataRef, 
+    (snap) => {
+      if (!isMountedRef.current) return;
+      if (snap.exists()) {
+        const data = { id: snap.id, ...snap.data() };
+        setData(prevData => ({ ...prevData, ...data }));
+      }
+    },
+    (error) => {
+      console.error('Listener error:', error);
+      // Don't show error for real-time updates
+    }
+  );
+
+  unsubscribeList.push(dataUnsubscribe);
+  unsubscribeRef.current = unsubscribeList;
+}, [id, currentUser?.uid]);
+```
+
+### **Optimistic Updates Pattern**
+```typescript
+// REQUIRED: Optimistic UI updates with rollback
+const handleOptimisticAction = useCallback(async () => {
+  // Optimistic update
+  setLocalState(newValue);
+  setData(prev => ({ ...prev, field: newValue }));
+
+  try {
+    await performServerAction();
+    showFeedback('Action completed! ✅');
+  } catch (error) {
+    // Rollback optimistic update
+    setLocalState(previousValue);
+    setData(prev => ({ ...prev, field: previousValue }));
+    showFeedback('Action failed. Please try again.');
+  }
+}, [dependencies]);
+```
+
+---
+
+## 🌐 **INTERNATIONALIZATION STANDARDS**
+
+### **Translation Integration**
+```typescript
+// MANDATORY: Translation service integration
+const {
+  translateItem,
+  getTranslatedText,
+  isTranslating,
+  isItemTranslated,
+  getCurrentLanguage,
+} = usePostTranslation();
+
+// REQUIRED: Translation functions
+const handleTranslate = useCallback(async (targetLanguage: string) => {
+  if (!content) return;
+  
+  const itemId = `type_${id}`;
+  try {
+    const translationService = DeepLTranslationService.getInstance();
+    await translateItem(
+      itemId,
+      content,
+      targetLanguage,
+      (text, targetLang) => translationService.translateText(text, targetLang)
+    );
+    showFeedback(`Content translated! 🌐`);
+  } catch (error) {
+    showFeedback('Translation failed. Please try again.');
+  }
+}, [content, translateItem]);
+
+// MANDATORY: Display logic
+const getDisplayText = useCallback(() => {
+  const translatedText = getTranslatedText(`type_${id}`);
+  return translatedText || originalText || '';
+}, [getTranslatedText, originalText, id]);
+```
+
+---
+
+## ♿ **ACCESSIBILITY STANDARDS**
+
+### **ARIA Labels & Roles**
+```typescript
+// MANDATORY: Accessibility properties
+<TouchableOpacity
+  style={styles.actionButton}
+  onPress={handleAction}
+  accessibilityRole="button"
+  accessibilityLabel="Descriptive action label"
+  accessibilityHint="What happens when pressed"
+  accessibilityState={{ 
+    disabled: !canInteract,
+    selected: isSelected 
+  }}
+>
+  {/* Button content */}
+</TouchableOpacity>
+
+// REQUIRED: Screen reader support
+<Text
+  style={styles.contentText}
+  accessibilityRole="text"
+  accessibilityLabel="Content description for screen readers"
+>
+  {displayContent}
+</Text>
+```
+
+### **Color Contrast Standards**
+```typescript
+// MANDATORY: High contrast ratios
+const accessibleColors = {
+  primaryText: '#FFFFFF',     // White on dark (21:1 ratio)
+  secondaryText: '#CCCCCC',   // Light gray (12:1 ratio)
+  accentText: '#00FFFF',      // Cyan (16:1 ratio)
+  errorText: '#FF6B6B',       // Light red (8:1 ratio)
+  successText: '#32CD32',     // Lime green (9:1 ratio)
+};
+```
+
+---
+
+## 🚀 **PERFORMANCE BENCHMARKS**
+
+### **Required Performance Metrics**
+- **Render Performance**: 60fps on all interactions
+- **Memory Usage**: No memory leaks, clean listener management
+- **Bundle Size**: Optimized imports, lazy loading where possible
+- **Load Time**: < 2 seconds for initial content
+- **Smooth Animations**: No jank, proper useNativeDriver usage
+
+### **Performance Monitoring**
+```typescript
+// REQUIRED: Performance tracking
+const startTime = performance.now();
+await performAction();
+const endTime = performance.now();
+console.log(`Action completed in ${endTime - startTime}ms`);
+
+// MANDATORY: Memory leak prevention
+useEffect(() => {
+  // Setup
+  return () => {
+    // ALWAYS clean up subscriptions, timers, animations
+  };
+}, []);
+```
+
+---
+
+## 🧪 **ERROR HANDLING STANDARDS**
+
+### **Comprehensive Error Boundaries**
+```typescript
+// MANDATORY: Error handling patterns
+const handleAsyncAction = useCallback(async () => {
+  setLoading(true);
+  setError(null);
+  
+  try {
+    const result = await performAction();
+    setData(result);
+    showFeedback('Success! ✅');
+  } catch (error) {
+    console.error('Action failed:', error);
+    
+    // User-friendly error messages
+    let userMessage = 'Something went wrong. Please try again.';
+    
+    if (error.code === 'permission-denied') {
+      userMessage = 'You do not have permission for this action.';
+    } else if (error.code === 'network-error') {
+      userMessage = 'Network error. Please check your connection.';
+    }
+    
+    setError(userMessage);
+    showFeedback(userMessage, 4000);
+  } finally {
+    setLoading(false);
+  }
+}, [dependencies]);
+```
+
+### **Network Resilience**
+```typescript
+// REQUIRED: Retry logic for network operations
+const performWithRetry = useCallback(async (action, maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await action();
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+      
+      // Exponential backoff
+      const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}, []);
+```
+
+---
+
+## 📁 **FILE STRUCTURE & COMPONENT ORGANIZATION**
+
+### **PostDetails Page Structure (REFERENCE IMPLEMENTATION)**
+
+```
+src/
+├── screens/
+│   └── PostDetails.tsx                    # Main page component (650 lines)
+├── components/
+│   └── forum/
+│       ├── PostContent.tsx               # Post display logic (300 lines)
+│       ├── CommentsList.tsx              # Comments container (200 lines)
+│       ├── CommentItem.tsx               # Individual comment (400 lines)
+│       ├── CommentInput.tsx              # Comment creation (250 lines)
+│       ├── EmojiPicker.tsx               # Emoji selection (400 lines)
+│       ├── QuickInfoBox.tsx              # User info modal (300 lines)
+│       ├── TranslationButton.tsx         # Translation UI (150 lines)
+│       ├── LoadingScreen.tsx             # Loading states (200 lines)
+│       └── ErrorScreen.tsx               # Error handling (250 lines)
+├── hooks/
+│   ├── usePostTranslation.ts             # Translation state management
+│   └── useTranslation.ts                 # Translation service hook
+├── services/
+│   └── DeepLTranslationService.ts        # External API integration
+└── utils/
+    ├── security.ts                       # Security validation functions
+    ├── helpers.ts                        # Common utilities
+    └── firebaseHelpers.ts                # Firebase utilities
+```
+
+### **MANDATORY: Multi-Component Architecture Pattern**
+
+#### **Main Page Component Responsibilities**
+```typescript
+// PostDetails.tsx - MAIN ORCHESTRATOR (600-700 lines MAX)
+export default function PostDetails() {
+  // 1. State Management (all shared state)
+  const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiTarget, setEmojiTarget] = useState<'main' | string>('main');
+  
+  // 2. Data Fetching & Real-time Listeners
+  const fetchPost = useCallback(async () => { /* logic */ }, []);
+  const setupRealTimeListeners = useCallback(() => { /* logic */ }, []);
+  
+  // 3. User Actions (debounced)
+  const handleLike = useCallback(debounce(async () => { /* logic */ }, 500), []);
+  const handleSave = useCallback(debounce(async () => { /* logic */ }, 500), []);
+  
+  // 4. UI Coordination
+  const handleShowEmojiPicker = useCallback((target) => { /* logic */ }, []);
+  const handleEmojiSelect = useCallback((emoji) => { /* logic */ }, []);
+  
+  // 5. Component Composition (NOT implementation)
+  return (
+    <View style={styles.container}>
+      <PostContent {...postProps} />
+      <CommentsList {...commentsProps} />
+      <EmojiPicker {...emojiProps} />
+    </View>
+  );
+}
+```
+
+#### **Feature Components Structure**
+
+```typescript
+// PostContent.tsx - POST DISPLAY LOGIC (300-400 lines MAX)
+interface PostContentProps {
+  post: Post;
+  postAuthor: PostAuthor | null;
+  onLike: () => void;
+  onSave: () => void;
+  onComment: () => void;
+  hasLiked: boolean;
+  isSaved: boolean;
+  // ... other props
+}
+
+const PostContent: React.FC<PostContentProps> = ({ /* props */ }) => {
+  // ONLY post display logic
+  const renderProfileBanner = () => { /* UI logic */ };
+  const renderPostContent = () => { /* UI logic */ };
+  const renderEngagementRow = () => { /* UI logic */ };
+  
+  return (
+    <View>
+      {renderProfileBanner()}
+      {renderPostContent()}
+      {renderEngagementRow()}
+    </View>
+  );
+};
+```
+
+```typescript
+// CommentsList.tsx - COMMENTS CONTAINER (200-300 lines MAX)
+interface CommentsListProps {
+  comments: Comment[];
+  postId: string;
+  sortMethod: 'newest' | 'mostLiked';
+  onSortChange: (method) => void;
+  // Emoji system props
+  showEmojiPicker: boolean;
+  onShowEmojiPicker: (target?: string) => void;
+  emojiTarget?: string;
+  // Reply state management
+  replyStates: {[commentId: string]: string};
+  onUpdateReplyText: (commentId: string, text: string) => void;
+  // ... other props
+}
+
+const CommentsList: React.FC<CommentsListProps> = ({ /* props */ }) => {
+  // ONLY comments listing logic
+  const [loading, setLoading] = useState(false);
+  
+  const renderSortOptions = () => { /* UI */ };
+  const renderCommentsList = () => { /* UI */ };
+  
+  return (
+    <View>
+      {renderSortOptions()}
+      {renderCommentsList()}
+    </View>
+  );
+};
+```
+
+#### **Individual Feature Components**
+
+```typescript
+// CommentItem.tsx - SINGLE COMMENT LOGIC (400-500 lines MAX)
+interface CommentItemProps {
+  comment: Comment;
+  postId: string;
+  onShowQuickInfo: (userData: any) => void;
+  // Emoji props (context-aware)
+  emojiTarget?: string;
+  replyText: string;
+  onUpdateReplyText: (text: string) => void;
+  onClearReplyText: () => void;
+  // ... other props
+}
+
+// EmojiPicker.tsx - EMOJI SELECTION (400-500 lines MAX)
+interface EmojiPickerProps {
+  visible: boolean;
+  onSelect: (emoji: string) => void;
+  onClose: () => void;
+}
+```
+
+### **REQUIRED: Separation of Concerns**
+
+#### **State Management Layer**
+```typescript
+// Main page handles ALL shared state
+const PostDetailsState = {
+  // Data state
+  post, setPost,
+  comments, setComments,
+  loading, setLoading,
+  
+  // UI state  
+  showEmojiPicker, setShowEmojiPicker,
+  emojiTarget, setEmojiTarget,
+  
+  // Context-aware state
+  replyStates, setReplyStates,
+  
+  // User interaction state
+  hasLiked, setHasLiked,
+  isSaved, setIsSaved,
+};
+```
+
+#### **Business Logic Layer**
+```typescript
+// Main page handles business operations
+const PostDetailsLogic = {
+  // Data operations
+  fetchPost,
+  setupRealTimeListeners,
+  
+  // User actions
+  handleLike,
+  handleSave,
+  handleDeletePost,
+  
+  // Complex state management
+  handleEmojiSelect,
+  updateReplyText,
+  clearReplyText,
+};
+```
+
+#### **Presentation Layer**
+```typescript
+// Components handle ONLY UI rendering
+const ComponentResponsibilities = {
+  PostContent: 'Display post data, engagement UI',
+  CommentsList: 'Sort and list comments',
+  CommentItem: 'Individual comment display + interactions',
+  EmojiPicker: 'Emoji selection interface',
+  QuickInfoBox: 'User info modal',
+  TranslationButton: 'Translation interface',
+};
+```
+
+### **MANDATORY: Props Flow Architecture**
+
+```typescript
+// TOP-DOWN DATA FLOW (React best practice)
+PostDetails (main state)
+    ↓ props
+PostContent (display only)
+    ↓ events
+PostDetails (state updates)
+
+PostDetails (main state)
+    ↓ props
+CommentsList (list management)
+    ↓ props
+CommentItem (individual logic)
+    ↓ events
+CommentsList → PostDetails (state updates)
+```
+
+### **File Size Guidelines**
+
+| Component Type | Max Lines | Purpose |
+|----------------|-----------|---------|
+| **Main Page** | 700 | State orchestration, business logic |
+| **Feature Component** | 400 | Specific feature implementation |
+| **UI Component** | 300 | Pure presentation logic |
+| **Utility Hook** | 200 | Reusable logic |
+| **Service** | 300 | External API integration |
+| **Utility Functions** | 150 per function | Helper operations |
+
+### **REQUIRED: Component Communication Patterns**
+
+#### **Parent-Child Communication**
+```typescript
+// Parent passes down props
+<ChildComponent 
+  data={parentState}
+  onAction={parentHandler}
+/>
+
+// Child triggers parent actions
+const ChildComponent = ({ onAction }) => {
+  const handleClick = () => {
+    onAction(data); // Notify parent
+  };
+};
+```
+
+#### **Context-Aware Communication**
+```typescript
+// For complex state (like emoji system)
+const handleEmojiSelect = (emoji: string) => {
+  if (emojiTarget === 'main') {
+    // Update main state
+  } else {
+    // Update specific component state
+    setReplyStates(prev => ({
+      ...prev,
+      [emojiTarget]: updatedValue
+    }));
+  }
+};
+```
+
+### **MANDATORY: Error Boundary Structure**
+
+```typescript
+// Each major component section needs error boundaries
+<ErrorBoundary fallback={<ErrorScreen />}>
+  <PostContent {...props} />
+</ErrorBoundary>
+
+<ErrorBoundary fallback={<ErrorScreen />}>
+  <CommentsList {...props} />
+</ErrorBoundary>
+```
+
+### **Hook Organization Pattern**
+
+```typescript
+// Custom hooks for reusable logic
+src/hooks/
+├── usePostTranslation.ts    # Translation state management
+├── useCommentManagement.ts  # Comment CRUD operations  
+├── useEmojiSystem.ts        # Emoji picker logic
+├── useUserInteractions.ts   # Like/save/follow logic
+└── useRealTimeData.ts       # Firebase listeners
+```
+
+### **Service Layer Structure**
+
+```typescript
+// External service integrations
+src/services/
+├── DeepLTranslationService.ts  # Translation API
+├── FirebaseService.ts          # Firebase operations
+├── NotificationService.ts      # Push notifications
+└── AnalyticsService.ts         # Usage tracking
+```
+
+### **Utility Organization**
+
+```typescript
+// Utility functions by category
+src/utils/
+├── security.ts           # Input validation, XSS protection
+├── firebaseHelpers.ts    # Firebase utilities
+├── helpers.ts            # General utilities
+├── dateUtils.ts          # Date formatting
+├── textUtils.ts          # Text processing
+└── constants.ts          # App constants
+```
+
+---
+
+## 📱 **COMPONENT ARCHITECTURE STANDARDS**
+
+### **Component Structure Template**
+```typescript
+// REQUIRED: Component structure
+interface ComponentProps {
+  // Props with proper typing
+}
+
+const Component: React.FC<ComponentProps> = ({
+  // Destructured props
+}) => {
+  // 1. State declarations
+  const [state, setState] = useState(initialValue);
+  
+  // 2. Refs
+  const isMountedRef = useRef(true);
+  
+  // 3. Custom hooks
+  const { customHook } = useCustomHook();
+  
+  // 4. Memoized values
+  const memoizedValue = useMemo(() => {
+    return expensiveCalculation();
+  }, [dependencies]);
+  
+  // 5. Callback handlers
+  const handleAction = useCallback(() => {
+    // Action logic
+  }, [dependencies]);
+  
+  // 6. Effects
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  
+  // 7. Render helpers
+  const renderSection = () => (
+    <View>{/* Section content */}</View>
+  );
+  
+  // 8. Main render
+  return (
+    <View style={styles.container}>
+      {renderSection()}
+    </View>
+  );
+};
+
+// MANDATORY: Styles with proper organization
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  // Organized by component sections
+});
+
+export default memo(Component);
+```
+
+---
+
+## 🎯 **TESTING STANDARDS**
+
+### **Required Test Coverage**
+- **Unit Tests**: All utility functions, hooks
+- **Integration Tests**: Component interactions
+- **Security Tests**: Input validation, XSS protection
+- **Performance Tests**: Memory leaks, render performance
+- **Accessibility Tests**: Screen reader compatibility
+
+### **Manual Testing Checklist**
+- ✅ Works on low-end Android devices (60fps)
+- ✅ Proper keyboard navigation
+- ✅ Screen reader announces correctly
+- ✅ All error states display properly
+- ✅ Network disconnection handling
+- ✅ Memory usage stays stable
+- ✅ All animations smooth
+- ✅ Proper state management under stress
+
+---
+
+## 📊 **PRODUCTION READINESS SCORECARD**
+
+### **Minimum Requirements for Production (8.5/10+)**
+
+| Category | Minimum Score | PostDetails Achievement |
+|----------|---------------|-------------------------|
+| **Security** | 8.5/10 | 9/10 ✅ |
+| **Performance** | 8.0/10 | 9.5/10 ✅ |
+| **Code Quality** | 8.5/10 | 9.5/10 ✅ |
+| **User Experience** | 8.0/10 | 9/10 ✅ |
+| **Accessibility** | 7.5/10 | 8.5/10 ✅ |
+| **Maintainability** | 8.0/10 | 9/10 ✅ |
+| **Error Handling** | 8.0/10 | 8.5/10 ✅ |
+
+### **Quality Gates**
+- ✅ **Security**: All inputs validated, XSS protected, rate limited
+- ✅ **Performance**: 60fps interactions, no memory leaks
+- ✅ **Architecture**: Clean state management, proper cleanup
+- ✅ **UX**: Clear feedback, intuitive interactions
+- ✅ **Accessibility**: Screen reader compatible, high contrast
+- ✅ **Error Handling**: Graceful failures, user-friendly messages
+
+---
+
+## 🏁 **IMPLEMENTATION CHECKLIST**
+
+### **Before Starting Development**
+- [ ] Review this standards document
+- [ ] Set up security utilities (`validateContent`, `sanitizeInput`)
+- [ ] Implement theme system with gaming colors
+- [ ] Create reusable UI components (buttons, inputs, modals)
+
+### **During Development**
+- [ ] Follow component architecture template
+- [ ] Implement proper state management patterns
+- [ ] Add comprehensive error handling
+- [ ] Include accessibility properties
+- [ ] Write performance-optimized code
+
+### **Before Production**
+- [ ] Security review and penetration testing
+- [ ] Performance testing on low-end devices
+- [ ] Accessibility audit with screen readers
+- [ ] Error scenario testing
+- [ ] Memory leak detection
+- [ ] Code review against this standards document
+
+---
+
+## 🎉 **SUCCESS CRITERIA**
+
+A component meets FC25 Locker production standards when it:
+
+1. **Feels Premium**: Smooth animations, gaming aesthetic, professional polish
+2. **Stays Secure**: Enterprise-grade validation, XSS protection, secure logging
+3. **Performs Excellently**: 60fps on all devices, efficient memory usage
+4. **Provides Great UX**: Intuitive interactions, clear feedback, accessibility
+5. **Maintains Quality**: Clean architecture, proper error handling, scalable code
+
+**The PostDetails page is the gold standard - match or exceed its quality in all future development.**
+
+---
+
+*This document represents the engineering excellence achieved in FC25 Locker's PostDetails implementation. Use it as your north star for all future development work.*
