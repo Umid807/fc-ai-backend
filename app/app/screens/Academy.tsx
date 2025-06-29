@@ -39,6 +39,7 @@ const AcademyScreen = React.forwardRef((props, ref) => {
 
   useEffect(() => {
   secureLog("AcademyScreen mounted: Initializing zoom-in effect and accelerometer listener");
+  secureLog("AcademyScreen mounted: Initializing zoom-in effect and accelerometer listener");
     Animated.timing(containerScale, {
       toValue: 1,
       duration: 600,
@@ -53,11 +54,14 @@ const AcademyScreen = React.forwardRef((props, ref) => {
 
     return () => subscription && subscription.remove();
     secureLog("AcademyScreen unmounted: Accelerometer listener removed.");
+    secureLog("AcademyScreen unmounted: Accelerometer listener removed.");
   }, []);
 
   const handleAttackingPress = () => router.push('/screens/OffenseScreen');
   logEvent("attack_button_pressed", { screen: "OffenseScreen" });
+  logEvent("attack_button_pressed", { screen: "OffenseScreen" });
   const handleDefendingPress = () => router.push('/screens/DefensiveFundamentals');
+  logEvent("defense_button_pressed", { screen: "DefensiveFundamentals" });
   logEvent("defense_button_pressed", { screen: "DefensiveFundamentals" });
 
   const animateSection = (overlayAnim, textScaleAnim, toValue, duration) => {
@@ -122,7 +126,9 @@ const AcademyScreen = React.forwardRef((props, ref) => {
               activeOpacity={1}
               onPressIn={() => animateSection(attackingOpacity, attackingTextScale, 1, 200)}
               secureLog("Attacking section animation started: onPressIn");
+              secureLog("Attacking section animation started: onPressIn");
               onPressOut={() => animateSection(attackingOpacity, attackingTextScale, 0, 300)}
+              secureLog("Attacking section animation ended: onPressOut");
               secureLog("Attacking section animation ended: onPressOut");
               onPress={handleAttackingPress}
             >
@@ -176,7 +182,9 @@ const AcademyScreen = React.forwardRef((props, ref) => {
               activeOpacity={1}
               onPressIn={() => animateSection(defendingOpacity, defendingTextScale, 1, 200)}
               secureLog("Defending section animation started: onPressIn");
+              secureLog("Defending section animation started: onPressIn");
               onPressOut={() => animateSection(defendingOpacity, defendingTextScale, 0, 300)}
+              secureLog("Defending section animation ended: onPressOut");
               secureLog("Defending section animation ended: onPressOut");
               onPress={handleDefendingPress}
             >
