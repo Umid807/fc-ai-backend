@@ -38,6 +38,7 @@ const AcademyScreen = React.forwardRef((props, ref) => {
   const tiltAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
 
   useEffect(() => {
+      console.log("AcademyScreen: Component mounted, starting intro zoom-in animation.");
     Animated.timing(containerScale, {
       toValue: 1,
       duration: 600,
@@ -57,6 +58,7 @@ const AcademyScreen = React.forwardRef((props, ref) => {
   const handleDefendingPress = () => router.push('/screens/DefensiveFundamentals');
 
   const animateSection = (overlayAnim, textScaleAnim, toValue, duration) => {
+  console.log("animateSection called with:", { toValue, duration });
     Animated.parallel([
       Animated.timing(overlayAnim, {
         toValue: toValue === 1 ? 0.3 : 0,
