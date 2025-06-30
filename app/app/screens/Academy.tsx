@@ -38,6 +38,7 @@ const AcademyScreen = React.forwardRef((props, ref) => {
   const tiltAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
 
   useEffect(() => {
+      secureLog("AcademyScreen mounted: Initializing zoom-in effect and accelerometer listener");
     Animated.timing(containerScale, {
       toValue: 1,
       duration: 600,
@@ -50,11 +51,18 @@ const AcademyScreen = React.forwardRef((props, ref) => {
       tiltAnim.setValue({ x: -x * 0.2, y: y * 0.2 });
     });
 
+    secureLog("AcademyScreen unmounted: Accelerometer listener removed.");
     return () => subscription && subscription.remove();
   }, []);
 
-  const handleAttackingPress = () => router.push('/screens/OffenseScreen');
-  const handleDefendingPress = () => router.push('/screens/DefensiveFundamentals');
+  const handleAttackingPress = () => {
+    logEvent("attack_button_pressed", { screen: "OffenseScreen" });
+    router.push('/screens/OffenseScreen');
+  }
+  const handleDefendingPress = () => {
+    logEvent("defense_button_pressed", { screen: "DefensiveFundamentals" });
+    router.push('/screens/DefensiveFundamentals');
+  }
 
   const animateSection = (overlayAnim, textScaleAnim, toValue, duration) => {
     Animated.parallel([
@@ -116,8 +124,14 @@ const AcademyScreen = React.forwardRef((props, ref) => {
             <TouchableOpacity
               style={styles.touchableContainer}
               activeOpacity={1}
-              onPressIn={() => animateSection(attackingOpacity, attackingTextScale, 1, 200)}
-              onPressOut={() => animateSection(attackingOpacity, attackingTextScale, 0, 300)}
+              onPressIn={() => {
+                secureLog("Attacking section animation started: onPressIn");
+                animateSection(attackingOpacity, attackingTextScale, 1, 200);
+              }}
+              onPressOut={() => {
+                secureLog("Attacking section animation ended: onPressOut");
+                animateSection(attackingOpacity, attackingTextScale, 0, 300);
+              }}
               onPress={handleAttackingPress}
             >
               <Animated.View style={[styles.pressOverlay, { opacity: attackingOpacity }]} />
@@ -168,8 +182,14 @@ const AcademyScreen = React.forwardRef((props, ref) => {
             <TouchableOpacity
               style={styles.touchableContainer}
               activeOpacity={1}
-              onPressIn={() => animateSection(defendingOpacity, defendingTextScale, 1, 200)}
-              onPressOut={() => animateSection(defendingOpacity, defendingTextScale, 0, 300)}
+              onPressIn={() => {
+                secureLog("Defending section animation started: onPressIn");
+                animateSection(defendingOpacity, defendingTextScale, 1, 200);
+              }}
+              onPressOut={() => {
+                secureLog("Defending section animation ended: onPressOut");
+                animateSection(defendingOpacity, defendingTextScale, 0, 300);
+              }}
               onPress={handleDefendingPress}
             >
               <Animated.View style={[styles.pressOverlay, { opacity: defendingOpacity }]} />
