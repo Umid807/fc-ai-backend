@@ -123,7 +123,6 @@ class ErrorBoundary extends React.Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('HomeScreen Error:', error, errorInfo);
     // Here you can log to Firebase Analytics or crash reporting
-  logEvent("error_boundary_catch", { error: error.message, componentStack: errorInfo.componentStack });
   }
 
   render() {
@@ -252,7 +251,6 @@ const VIPBadge = () => (
 export default function HomePage() {
   const { t } = useTranslation();
   const router = useRouter();
-  console.log("HomeScreen mounted.");
   
   // State Management
   const [coins, setCoins] = useState<number>(0);
@@ -364,7 +362,6 @@ export default function HomePage() {
       
       return currentMondayStart.getTime() !== lastResetMondayStart.getTime();
     }
-    logEvent("hero_card_pressed", { type: "coming_soon", title: card.title });
     
     return false;
   }, []);
@@ -378,9 +375,7 @@ export default function HomePage() {
       if (!user) {
         Alert.alert(t('home.errorTitle'), t('home.userNotSignedIn'));
         return;
-      console.warn("handleNotifyMe: User not signed in for notification setup.");
       }
-      console.warn("handleUseCoinsForAI: User not signed in.");
 
       // Enhanced permission request for both platforms
       let permissionResult;
@@ -409,10 +404,8 @@ export default function HomePage() {
           'Enable notifications to get reminded about the weekly raffle! ⚽'
         );
         return;
-        console.warn("handleDailyReward: User not signed in.");
       }
 
-      logEvent("notification_permission_denied");
       const db = getFirestore();
       const userDocRef = doc(db, "users", user.uid);
       
@@ -447,7 +440,6 @@ export default function HomePage() {
       await updateDoc(userDocRef, {
         raffleNotificationId: notificationId,
         raffleNotificationEnabled: true,
-        logEvent("notification_scheduled", { notificationId: notificationId, nextFridayEST: nextFridayEST.toLocaleString(), isSubscribed: true });
         lastNotificationScheduled: new Date(),
       });
 
@@ -464,12 +456,10 @@ export default function HomePage() {
     }
   }, [t, getNextFridayEST, isSubscribedToNotifications]);
 
-  logEvent("notification_setup_error", { error: error.message });
   // Network status monitoring
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       setIsOnline(state.isConnected ?? true);
-    console.log("Network status changed:", state.isConnected);
     });
 
     addCleanup(() => unsubscribe());
@@ -484,7 +474,6 @@ export default function HomePage() {
     if (!user) {
       setUsername(t('home.defaultUsername'));
       setCoins(0);
-      console.log("User document does not exist, setting default user data.");
       setIsVIP(false);
       setRemainingQuestions(FREE_QUESTIONS_LIMIT);
       setDailyChallengeCoins(0);
@@ -508,7 +497,6 @@ export default function HomePage() {
       async (docSnapshot) => {
         try {
           if (docSnapshot.exists()) {
-            console.log("User data snapshot received.");
             const userData = docSnapshot.data() as UserData;
             
             // Safe data extraction with fallbacks
@@ -523,7 +511,6 @@ export default function HomePage() {
             if (!userData.vip && shouldResetAIQuestions(userData)) {
               currentQuestions = FREE_QUESTIONS_LIMIT;
               
-              logEvent("ai_questions_reset", { oldRemaining: userData.remainingFreeAIQuestions, newRemaining: FREE_QUESTIONS_LIMIT });
               // Update Firebase with reset
               try {
                 await updateDoc(userDocRef, {
@@ -541,7 +528,6 @@ export default function HomePage() {
             const lastClaimedDate = userData.lastClaimedDate?.toDate?.() ?? 
               (userData.lastClaimedDate ? new Date(userData.lastClaimedDate) : null);
             const todayString = new Date().toISOString().split('T')[0];
-            console.log("Daily reward claimed status checked.");
             const lastClaimedString = lastClaimedDate ? 
               lastClaimedDate.toISOString().split('T')[0] : "";
             
@@ -558,7 +544,6 @@ export default function HomePage() {
         } catch (error) {
           console.error("Error processing user data:", error);
         } finally {
-        logEvent("user_data_snapshot_error", { error: error.message });
           if (!dataLoaded) {
             setDataLoaded(true);
             setPageLoading(false);
@@ -584,7 +569,6 @@ export default function HomePage() {
   useEffect(() => {
     const fetchHeroCards = async () => {
       try {
-        console.log("Fetching hero cards...");
         setHeroLoading(true);
         const db = getFirestore();
         const heroRef = collection(db, "mainHero");
@@ -606,11 +590,9 @@ export default function HomePage() {
           .slice(0, 5);
           
         setHeroCards(validCards);
-        console.log("Hero cards fetched successfully:", validCards.length, "cards.");
       } catch (err) {
         console.error("Error loading hero cards:", err);
         setHeroCards([]);
-      logEvent("hero_cards_fetch_error", { error: err.message });
       } finally {
         setHeroLoading(false);
       }
@@ -623,7 +605,6 @@ export default function HomePage() {
   useEffect(() => {
     const fetchHomeVideos = async () => {
       try {
-        console.log("Fetching home videos...");
         setVideosLoading(true);
         const db = getFirestore();
         const videosRef = collection(db, "videos");
@@ -671,9 +652,7 @@ export default function HomePage() {
         setHomeVideos(selected);
       } catch (error) {
         console.error("Error fetching home videos:", error);
-        console.log("Home videos fetched successfully:", selected.length, "videos.");
         setHomeVideos([]);
-      logEvent("home_videos_fetch_error", { error: error.message });
       } finally {
         setVideosLoading(false);
       }
@@ -686,16 +665,13 @@ export default function HomePage() {
   useEffect(() => {
     const fetchAcademyVisibility = async () => {
       try {
-        console.log("Fetching academy visibility status...");
         const db = getFirestore();
         const docRef = doc(db, 'settings', 'FC LIVE Academy visibility');
         const docSnap = await getDoc(docRef);
         setAcademyVisible(docSnap.exists() && docSnap.data()?.academyVisible === true);
       } catch (err) {
         console.error("Error fetching academy visibility:", err);
-        console.log("Academy visibility fetched.");
         setAcademyVisible(false);
-      logEvent("academy_visibility_fetch_error", { error: err.message });
       }
     };
     
@@ -706,7 +682,6 @@ export default function HomePage() {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
-      console.log("Daily reward countdown:", dailyRewardCountdownState);
       
       // Calculate next Friday 8 PM EST/EDT
       const nextFridayEST = getNextFridayEST();
@@ -748,7 +723,6 @@ export default function HomePage() {
   useEffect(() => {
     const interval = setInterval(() => {
       Animated.timing(didYouKnowTextOpacity, { 
-        console.log("Did You Know animation: Changing tip to index", (prevIndex + 1) % didYouKnowTipKeys.length);
         toValue: 0, 
         duration: 500, 
         useNativeDriver: true 
@@ -772,7 +746,6 @@ export default function HomePage() {
   useEffect(() => {
     const progressVal = Math.min(dailyChallengeCoins / 1000, 1);
     Animated.timing(progressAnim, { 
-      console.log("Daily challenge progress animation updated:", progressVal);
       toValue: progressVal, 
       duration: 500, 
       useNativeDriver: false 
@@ -814,7 +787,6 @@ export default function HomePage() {
   const handleDailyReward = useCallback(async () => {
     try {
       const auth = getAuth();
-      console.log("Attempting to claim daily reward.");
       const user = auth.currentUser;
       
       if (!user) {
@@ -842,18 +814,15 @@ export default function HomePage() {
         if (lastClaimedString === todayString) {
           throw new Error("AlreadyClaimed");
         }
-        logEvent("daily_reward_already_claimed");
         
         transaction.update(userDocRef, {
           coins: (userData.coins || 0) + DAILY_REWARD_AMOUNT,
           lastClaimedDate: new Date(),
-        logEvent("daily_reward_claimed", { amount: DAILY_REWARD_AMOUNT, newCoins: (userData.coins || 0) + DAILY_REWARD_AMOUNT });
         });
       });
       
       setDailyRewardClaimed(true);
       setShowRewardPopup(true);
-      console.log("Coin drop animation triggered.");
       
       // Auto-hide reward popup
       setTimeout(() => setShowRewardPopup(false), 3000);
@@ -876,7 +845,6 @@ export default function HomePage() {
       
     } catch (error: any) {
       console.error("Daily reward error:", error);
-      logEvent("daily_reward_claim_error", { error: error.message });
       
       let errorMessage = t('home.couldNotClaimReward');
       if (error.message === "AlreadyClaimed") {
@@ -895,7 +863,6 @@ export default function HomePage() {
       return;
     }
     
-      console.warn("AI question submission failed: Empty question.");
     if (!isOnline) {
       Alert.alert('⚽ No Connection', 'Check your internet connection to ask AI questions!');
       return;
@@ -904,15 +871,12 @@ export default function HomePage() {
     if (!isVIP && remainingQuestions <= 0) {
       Alert.alert(t('home.limitReachedTitle'), t('home.allFreeQuestionsUsed'));
       return;
-    logEvent("ai_ask_offline");
     }
-    logEvent("ai_free_limit_reached", { remaining: remainingQuestions });
     
     setLoading(true);
     const BACKEND_URL = "https://fc-ai-backend.onrender.com/api/ask-ai";
     
     try {
-    console.log("Asking AI:", question);
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -928,7 +892,6 @@ export default function HomePage() {
       if (data.answer) {
         setAnswer(data.answer);
         setFullAnswer(data.answer);
-        console.log("AI API response received:", data.answer ? "success" : "no answer");
         setShortAnswer(truncateText(data.answer));
         
         // Update remaining questions for non-VIP users
@@ -960,7 +923,6 @@ export default function HomePage() {
     } catch (error: any) {
       console.error("AI API call error:", error);
       const errorMessage = error.message.includes('Network request failed') || error.message.includes('fetch') ? 
-      logEvent("ai_api_call_failed", { error: error.message });
         '⚽ Connection timeout! Check your internet and try again.' : 
         '🤖 AI is taking a break! Please try again in a moment.';
       setAnswer(errorMessage);
@@ -977,7 +939,6 @@ export default function HomePage() {
   const handleUseCoinsForAI = useCallback(async () => {
     const auth = getAuth();
     const user = auth.currentUser;
-    console.log("Attempting to use coins for AI question.");
     
     if (!user) {
       Alert.alert(t('home.errorTitle'), t('home.userNotSignedIn'));
@@ -1011,14 +972,12 @@ export default function HomePage() {
         transaction.update(userRef, {
           coins: currentCoins - AI_QUESTION_COST,
           remainingFreeAIQuestions: currentQuestions + 1,
-        logEvent("ai_coins_deducted", { cost: AI_QUESTION_COST, newCoins: currentCoins - AI_QUESTION_COST, newRemainingQuestions: currentQuestions + 1 });
         });
       });
       
       Alert.alert('⚽ Success!', 'You gained an extra AI question! Game on!');
     } catch (err: any) {
       console.error("Error using coins for AI:", err);
-      logEvent("ai_coins_usage_error", { error: err.message });
       
       let errorMessage = 'Transaction failed. Please try again!';
       if (err.message === "NotEnoughCoins") {
@@ -1035,27 +994,22 @@ export default function HomePage() {
     if (!videoUrl) {
       Alert.alert('⚽ Video Error', 'This video is currently unavailable!');
       return;
-    logEvent("ai_not_enough_coins", { currentCoins: coins, requiredCoins: AI_QUESTION_COST });
     }
     setSelectedVideoUrl(videoUrl);
     setVideoModalVisible(true);
   }, []);
 
-    console.log("Video modal opened for URL:", videoUrl);
   const handleHeroPress = useCallback((card: HeroCard) => {
     if (card.videoUrl) {
       openVideoModal(card.videoUrl);
-    logEvent("hero_card_pressed", { type: "video", title: card.title });
     } else if (card.articleId) {
       router.push({ 
         pathname: "/screens/ArticleScreen", 
-    logEvent("hero_card_pressed", { type: "article", title: card.title, articleId: card.articleId });
         params: { articleId: card.articleId } 
       });
     } else if (card.type === "card") {
       router.push("/screens/GenerateCard");
     } else {
-    logEvent("hero_card_pressed", { type: "generate_card", title: card.title });
       Alert.alert('⚽ Coming Soon', 'This feature will be available soon!');
     }
   }, [openVideoModal, router]);
@@ -1063,7 +1017,6 @@ export default function HomePage() {
   const handleShafflePress = useCallback(() => {
     router.push('/screens/Raffle');
   }, [router]);
-  logEvent("weekly_raffle_button_pressed");
 
   // Enhanced render functions with accessibility
   const renderHeroCard = useCallback(({ item }: { item: HeroCard }) => (
@@ -1161,7 +1114,6 @@ export default function HomePage() {
               <Link href="/profile" asChild>
                 <TouchableOpacity style={styles.headerButton}>
                   <Image 
-                    logEvent("profile_button_pressed");
                     source={{ uri: 'https://via.placeholder.com/40' }} 
                     style={styles.profileImage}
                     defaultSource={require('../../assets/images/fallback.png')}
@@ -1177,7 +1129,6 @@ export default function HomePage() {
               <FadeTouchable 
                 onPress={() => router.push('/screens/FCAcademy')}
                 accessibilityLabel="FC Academy"
-                logEvent("fc_academy_button_pressed");
                 accessibilityHint="Enter the academy for training"
               >
                 <LinearGradient 
@@ -1417,7 +1368,6 @@ export default function HomePage() {
                 {fullAnswer.length > shortAnswer.length && (
                   <TouchableOpacity 
                     style={styles.viewMoreButton} 
-                    logEvent("ai_view_full_answer_pressed");
                     onPress={() => router.push({ 
                       pathname: "/AskAiFullPage", 
                       params: { fullAnswer: encodeURIComponent(fullAnswer) } 
@@ -1514,7 +1464,6 @@ export default function HomePage() {
                   <FadeTouchable
                     key={video.id}
                     style={[
-                      logEvent("video_card_pressed", { videoId: video.id, title: video.title });
                       styles.videoCard,
                       index === 0 && styles.videoCard1,
                       index === 1 && styles.videoCard2,
@@ -1554,7 +1503,6 @@ export default function HomePage() {
             <View style={styles.moreVideosButtonContainer}>
               <FadeTouchable 
                 onPress={() => router.push('/screens/MoreVideos')} 
-                logEvent("more_videos_button_pressed");
                 style={styles.watchMoreButton}
                 accessibilityLabel="More videos"
               >
@@ -1585,7 +1533,6 @@ export default function HomePage() {
                 <FadeTouchable 
                   onPress={() => router.push('/Dna/quiz')} 
                   style={styles.dnaButtonTouchable}
-                  logEvent("dna_quiz_button_pressed");
                   accessibilityLabel="Start DNA quiz"
                 >
                   <LinearGradient 
@@ -1622,7 +1569,6 @@ export default function HomePage() {
           animationType="slide" 
           onRequestClose={() => setVideoModalVisible(false)}
         >
-          logEvent("video_modal_closed");
           <View style={styles.modalContainer}>
             <TouchableOpacity 
               style={styles.modalCloseButton} 
