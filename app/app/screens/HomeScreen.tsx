@@ -122,6 +122,7 @@ class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('HomeScreen Error:', error, errorInfo);
+    logEvent("error_boundary_catch", { error: error.message, componentStack: errorInfo.componentStack });
     // Here you can log to Firebase Analytics or crash reporting
   }
 
@@ -219,6 +220,12 @@ const OfflineBanner = ({ isVisible }: { isVisible: boolean }) => {
   const slideAnim = useRef(new Animated.Value(-100)).current;
 
   useEffect(() => {
+    console.log("Daily challenge progress animation updated:", progressVal);
+    console.log("Did You Know animation: Changing tip to index", (prevIndex + 1) % didYouKnowTipKeys.length);
+    console.log("Fetching academy visibility status...");
+    console.log("Fetching home videos...");
+    console.log("Fetching hero cards...");
+    console.log("Network status changed:", state.isConnected);
     Animated.timing(slideAnim, {
       toValue: isVisible ? 0 : -100,
       duration: 300,
@@ -249,6 +256,7 @@ const VIPBadge = () => (
 );
 
 export default function HomePage() {
+  console.log("HomeScreen mounted.");
   const { t } = useTranslation();
   const router = useRouter();
   
@@ -336,6 +344,7 @@ export default function HomePage() {
       }
     } else {
       nextFriday.setDate(nextFriday.getDate() + daysUntilFriday);
+      logEvent("hero_card_pressed", { type: "coming_soon", title: card.title });
     }
     
     nextFriday.setHours(20, 0, 0, 0);
@@ -375,6 +384,9 @@ export default function HomePage() {
       if (!user) {
         Alert.alert(t('home.errorTitle'), t('home.userNotSignedIn'));
         return;
+        console.warn("handleNotifyMe: User not signed in for notification setup.");
+        console.warn("handleDailyReward: User not signed in.");
+        console.warn("handleUseCoinsForAI: User not signed in.");
       }
 
       // Enhanced permission request for both platforms
@@ -399,6 +411,7 @@ export default function HomePage() {
       }
       
       if (permissionResult.status !== 'granted') {
+        logEvent("notification_permission_denied");
         Alert.alert(
           '🔔 Permission Required', 
           'Enable notifications to get reminded about the weekly raffle! ⚽'
@@ -442,6 +455,7 @@ export default function HomePage() {
         raffleNotificationEnabled: true,
         lastNotificationScheduled: new Date(),
       });
+      logEvent("notification_scheduled", { notificationId: notificationId, nextFridayEST: nextFridayEST.toLocaleString(), isSubscribed: true });
 
       setIsSubscribedToNotifications(true);
       
@@ -453,6 +467,7 @@ export default function HomePage() {
     } catch (error) {
       console.error('Notification setup error:', error);
       Alert.alert('⚽ Oops!', 'Could not set up notifications. Please try again!');
+      logEvent("notification_setup_error", { error: error.message });
     }
   }, [t, getNextFridayEST, isSubscribedToNotifications]);
 
@@ -495,6 +510,7 @@ export default function HomePage() {
     const unsubscribe = onSnapshot(
       userDocRef,
       async (docSnapshot) => {
+        console.log("User data snapshot received.");
         try {
           if (docSnapshot.exists()) {
             const userData = docSnapshot.data() as UserData;
@@ -510,6 +526,7 @@ export default function HomePage() {
             
             if (!userData.vip && shouldResetAIQuestions(userData)) {
               currentQuestions = FREE_QUESTIONS_LIMIT;
+              logEvent("ai_questions_reset", { oldRemaining: userData.remainingFreeAIQuestions, newRemaining: FREE_QUESTIONS_LIMIT });
               
               // Update Firebase with reset
               try {
@@ -527,12 +544,14 @@ export default function HomePage() {
             // Handle date comparison safely
             const lastClaimedDate = userData.lastClaimedDate?.toDate?.() ?? 
               (userData.lastClaimedDate ? new Date(userData.lastClaimedDate) : null);
+              console.log("Daily reward claimed status checked.");
             const todayString = new Date().toISOString().split('T')[0];
             const lastClaimedString = lastClaimedDate ? 
               lastClaimedDate.toISOString().split('T')[0] : "";
             
             setDailyRewardClaimed(lastClaimedString === todayString);
           } else {
+          console.log("User document does not exist, setting default user data.");
             // Reset to defaults if document doesn't exist
             setCoins(0);
             setIsVIP(false);
@@ -544,6 +563,8 @@ export default function HomePage() {
         } catch (error) {
           console.error("Error processing user data:", error);
         } finally {
+        logEvent("user_data_snapshot_error", { error: error.message });
+        logEvent("home_videos_fetch_error", { error: error.message });
           if (!dataLoaded) {
             setDataLoaded(true);
             setPageLoading(false);
@@ -588,13 +609,16 @@ export default function HomePage() {
           })
           .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
           .slice(0, 5);
+          console.log("Hero cards fetched successfully:", validCards.length, "cards.");
           
         setHeroCards(validCards);
       } catch (err) {
+      logEvent("academy_visibility_fetch_error", { error: err.message });
         console.error("Error loading hero cards:", err);
         setHeroCards([]);
       } finally {
         setHeroLoading(false);
+        logEvent("hero_cards_fetch_error", { error: err.message });
       }
     };
     
@@ -650,6 +674,7 @@ export default function HomePage() {
         }
         
         setHomeVideos(selected);
+        console.log("Home videos fetched successfully:", selected.length, "videos.");
       } catch (error) {
         console.error("Error fetching home videos:", error);
         setHomeVideos([]);
@@ -672,6 +697,7 @@ export default function HomePage() {
       } catch (err) {
         console.error("Error fetching academy visibility:", err);
         setAcademyVisible(false);
+        console.log("Academy visibility fetched.");
       }
     };
     
@@ -681,6 +707,7 @@ export default function HomePage() {
   // Enhanced Countdown Timer Effect
   useEffect(() => {
     const timer = setInterval(() => {
+      console.log("Daily reward countdown:", dailyRewardCountdownState);
       const now = new Date();
       
       // Calculate next Friday 8 PM EST/EDT
@@ -785,7 +812,9 @@ export default function HomePage() {
 
   // Enhanced Event Handlers
   const handleDailyReward = useCallback(async () => {
+    console.log("Attempting to claim daily reward.");
     try {
+      logEvent("daily_reward_claimed", { amount: DAILY_REWARD_AMOUNT, newCoins: (userData.coins || 0) + DAILY_REWARD_AMOUNT });
       const auth = getAuth();
       const user = auth.currentUser;
       
@@ -813,6 +842,7 @@ export default function HomePage() {
         
         if (lastClaimedString === todayString) {
           throw new Error("AlreadyClaimed");
+          logEvent("daily_reward_already_claimed");
         }
         
         transaction.update(userDocRef, {
@@ -823,6 +853,7 @@ export default function HomePage() {
       
       setDailyRewardClaimed(true);
       setShowRewardPopup(true);
+      console.log("Coin drop animation triggered.");
       
       // Auto-hide reward popup
       setTimeout(() => setShowRewardPopup(false), 3000);
@@ -845,6 +876,8 @@ export default function HomePage() {
       
     } catch (error: any) {
       console.error("Daily reward error:", error);
+      logEvent("daily_reward_claim_error", { error: error.message });
+      logEvent("ai_api_call_failed", { error: error.message });
       
       let errorMessage = t('home.couldNotClaimReward');
       if (error.message === "AlreadyClaimed") {
@@ -858,6 +891,7 @@ export default function HomePage() {
   }, [t, coinOpacity]);
 
   const handleAskAI = useCallback(async () => {
+    console.warn("AI question submission failed: Empty question.");
     if (!question.trim()) {
       Alert.alert(t('home.errorTitle'), 'Please enter a question first! ⚽');
       return;
@@ -866,14 +900,17 @@ export default function HomePage() {
     if (!isOnline) {
       Alert.alert('⚽ No Connection', 'Check your internet connection to ask AI questions!');
       return;
+      logEvent("ai_ask_offline");
     }
     
     if (!isVIP && remainingQuestions <= 0) {
       Alert.alert(t('home.limitReachedTitle'), t('home.allFreeQuestionsUsed'));
       return;
+      logEvent("ai_free_limit_reached", { remaining: remainingQuestions });
     }
     
     setLoading(true);
+    console.log("Asking AI:", question);
     const BACKEND_URL = "https://fc-ai-backend.onrender.com/api/ask-ai";
     
     try {
@@ -893,6 +930,7 @@ export default function HomePage() {
         setAnswer(data.answer);
         setFullAnswer(data.answer);
         setShortAnswer(truncateText(data.answer));
+        console.log("AI API response received:", data.answer ? "success" : "no answer");
         
         // Update remaining questions for non-VIP users
         if (!isVIP) {
@@ -937,10 +975,12 @@ export default function HomePage() {
   }, []);
 
   const handleUseCoinsForAI = useCallback(async () => {
+    console.log("Attempting to use coins for AI question.");
     const auth = getAuth();
     const user = auth.currentUser;
     
     if (!user) {
+      logEvent("ai_coins_deducted", { cost: AI_QUESTION_COST, newCoins: currentCoins - AI_QUESTION_COST, newRemainingQuestions: currentQuestions + 1 });
       Alert.alert(t('home.errorTitle'), t('home.userNotSignedIn'));
       return;
     }
@@ -948,6 +988,7 @@ export default function HomePage() {
     if (coins < AI_QUESTION_COST) {
       Alert.alert('⚽ Not Enough Coins', `You need ${AI_QUESTION_COST} coins for an extra question!`);
       return;
+      logEvent("ai_not_enough_coins", { currentCoins: coins, requiredCoins: AI_QUESTION_COST });
     }
     
     const db = getFirestore();
@@ -978,6 +1019,7 @@ export default function HomePage() {
       Alert.alert('⚽ Success!', 'You gained an extra AI question! Game on!');
     } catch (err: any) {
       console.error("Error using coins for AI:", err);
+      logEvent("ai_coins_usage_error", { error: err.message });
       
       let errorMessage = 'Transaction failed. Please try again!';
       if (err.message === "NotEnoughCoins") {
@@ -991,6 +1033,7 @@ export default function HomePage() {
   }, [coins, t]);
 
   const openVideoModal = useCallback((videoUrl: string) => {
+    console.log("Video modal opened for URL:", videoUrl);
     if (!videoUrl) {
       Alert.alert('⚽ Video Error', 'This video is currently unavailable!');
       return;
@@ -1000,6 +1043,7 @@ export default function HomePage() {
   }, []);
 
   const handleHeroPress = useCallback((card: HeroCard) => {
+    logEvent("hero_card_pressed", { type: "video", title: card.title });
     if (card.videoUrl) {
       openVideoModal(card.videoUrl);
     } else if (card.articleId) {
@@ -1007,10 +1051,13 @@ export default function HomePage() {
         pathname: "/screens/ArticleScreen", 
         params: { articleId: card.articleId } 
       });
+      logEvent("hero_card_pressed", { type: "article", title: card.title, articleId: card.articleId });
+      logEvent("weekly_raffle_button_pressed");
     } else if (card.type === "card") {
       router.push("/screens/GenerateCard");
     } else {
       Alert.alert('⚽ Coming Soon', 'This feature will be available soon!');
+      logEvent("hero_card_pressed", { type: "generate_card", title: card.title });
     }
   }, [openVideoModal, router]);
 
