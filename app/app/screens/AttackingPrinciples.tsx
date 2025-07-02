@@ -1,5 +1,4 @@
-// AttackingPrinciples.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,11 +26,11 @@ const principles = [
   },
   {
     title: "Switching Play",
-    details: `Switching the point of attack quickly is crucial when the defense is compact. A well-executed switch can leave one side of the field vulnerable, allowing your team to exploit a temporary numerical advantage. Work on cross-field passes and make sure you’re aware of teammates making runs to support these switches.`,
+    details: `Switching the point of attack quickly is crucial when the defense is compact. A well-executed switch can leave one side of the field vulnerable, allowing your advanced team to exploit a contemporary numerical advantage. Work on cross-field passes and make sure you’re aware of teammates making runs to support these switches.`,
   },
   {
     title: "Changing the Tempo",
-    details: `Maintaining a constant rhythm makes your attack predictable. Changing the tempo—alternating between quick, incisive moves and slower, more controlled play—can unsettle even the best-organized defenses. Learn to read the game and adjust your pace accordingly, knowing when to push forward rapidly or when to hold the ball to let teammates join the attack.`,
+    details: `Maintaining a constant rhythm makes your attack predictable. Changing the tempo alternating between quick, incisive moves and slower, more controlled play. can unsettle even the best-organized defenses. Learn to read the game and adjust your pace accordingly, knowing when to push forward rapidly or when to hold the ball to let teammates join the attack.`,
   },
   {
     title: "Effective Combination Play",
@@ -45,76 +44,124 @@ const principles = [
 ];
 
 const AttackingPrinciples = () => {
+  console.log("AttackingPrinciples: Component rendering started.");
+
   // Using a Set to track expanded card indices.
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  console.log("AttackingPrinciples: useState 'expanded' initialized with an empty Set.");
+
   // Animated values for each card (for smooth fade in/out of details).
-  const animationValues = useRef<Record<number, Animated.Value>>({}).current;
+  const animationValues = useRef<Record<number, Animated.Value>>({});
+  console.log("AttackingPrinciples: useRef 'animationValues' initialized.");
+
+  useEffect(() => {
+    console.log("AttackingPrinciples: Component mounted successfully.");
+    // No cleanup needed for this effect, but adding for demonstration.
+    return () => {
+      console.log("AttackingPrinciples: Component unmounting.");
+    };
+  }, []);
 
   // Initialize animated values if not already done.
   principles.forEach((_, index) => {
-    if (!animationValues[index]) {
-      animationValues[index] = new Animated.Value(0);
+    if (!animationValues.current[index]) {
+      animationValues.current[index] = new Animated.Value(0);
+      console.log(`AttackingPrinciples: Initializing animation value for index: ${index}`);
+    } else {
+      console.log(`AttackingPrinciples: Animation value already exists for index: ${index}. Skipping initialization.`);
     }
   });
 
   const toggleExpand = (index: number) => {
-    const newExpanded = new Set(expanded);
-    const currentlyExpanded = newExpanded.has(index);
+    console.log(`AttackingPrinciples: Toggle expand called for index: ${index}`);
+    try {
+      const newExpanded = new Set(expanded);
+      console.log(`AttackingPrinciples: Created new Set from current expanded state. Current size: ${expanded.size}`);
+      const currentlyExpanded = newExpanded.has(index);
+      console.log(`AttackingPrinciples: Card at index ${index} is currently expanded: ${currentlyExpanded}`);
 
-    if (currentlyExpanded) {
-      newExpanded.delete(index);
-      Animated.timing(animationValues[index], {
-        toValue: 0,
-        duration: 300,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }).start();
-    } else {
-      newExpanded.add(index);
-      Animated.timing(animationValues[index], {
-        toValue: 1,
-        duration: 300,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }).start();
+      if (currentlyExpanded) {
+        newExpanded.delete(index);
+        console.log(`AttackingPrinciples: Card at index ${index} was expanded. Deleting from set.`);
+        Animated.timing(animationValues.current[index], {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }).start(() => {
+          console.log(`AttackingPrinciples: Animation to collapse card ${index} completed.`);
+        });
+        console.log(`AttackingPrinciples: Started collapse animation for index: ${index}`);
+      } else {
+        newExpanded.add(index);
+        console.log(`AttackingPrinciples: Card at index ${index} was collapsed. Adding to set.`);
+        Animated.timing(animationValues.current[index], {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }).start(() => {
+          console.log(`AttackingPrinciples: Animation to expand card ${index} completed.`);
+        });
+        console.log(`AttackingPrinciples: Started expand animation for index: ${index}`);
+      }
+      setExpanded(newExpanded);
+      console.log(`AttackingPrinciples: Expanded state updated. New expanded set size: ${newExpanded.size}`);
+    } catch (error) {
+      console.error(`AttackingPrinciples: Error in toggleExpand for index ${index}. Error: ${error.message}`);
     }
-    setExpanded(newExpanded);
   };
 
+  console.log("AttackingPrinciples: Component rendering return block.");
   return (
     <LinearGradient colors={['#0e0e0e', '#1a1a1a']} style={styles.container}>
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Text style={styles.header}>Essential Attacking Principles</Text>
+        {console.log("AttackingPrinciples: Mapping through principles array for rendering cards.")}
         {principles.map((principle, index) => {
           const isExpanded = expanded.has(index);
+          console.log(`AttackingPrinciples: Rendering card for index: ${index}, title: "${principle.title}", isExpanded: ${isExpanded}`);
           return (
             <View key={index} style={styles.card}>
-              <TouchableOpacity onPress={() => toggleExpand(index)}>
+              <TouchableOpacity onPress={() => {
+                console.log(`AttackingPrinciples: TouchableOpacity pressed for card index: ${index}`);
+                toggleExpand(index);
+              }}>
                 <LinearGradient
-                  colors={['#3a3a3a', '#2a2a2a']}
-                  style={styles.cardHeader}
+                    colors={['#3a3a3a', '#2a2a2a']}
+                   style={styles.cardHeader}
                 >
                   <View style={styles.headerContent}>
                     <Text style={styles.title}>{principle.title}</Text>
                     {isExpanded ? (
-                      <ChevronUp size={20} color="#FFD700" />
+                        <>
+                          <ChevronUp size={20} color="#FFD300" />
+                          {console.log(`AttackingPrinciples: Displaying ChevronUp for card index: ${index}`)}
+                        </>
                     ) : (
-                      <ChevronDown size={20} color="#FFD700" />
+                        <>
+                          <ChevronDown size={20} color="#FFD300" />
+                          {console.log(`AttackingPrinciples: Displaying ChevronDown for card index: ${index}`)}
+                        </>
                     )}
                   </View>
                 </LinearGradient>
               </TouchableOpacity>
               {isExpanded && (
-                <Animated.View
-                  style={[styles.details, { opacity: animationValues[index] }]}
-                >
-                  <Text style={styles.detailsText}>{principle.details}</Text>
-                </Animated.View>
+                <>
+                  {console.log(`AttackingPrinciples: Details view conditionally rendered for card index: ${index}`)}
+                  <Animated.View
+                    style={[styles.details, { opacity: animationValues.current[index] }]}
+                  >
+                    <Text style={styles.detailsText}>{principle.details}</Text>
+                  </Animated.View>
+                </>
               )}
             </View>
           );
         })}
       </ScrollView>
+      {console.log("AttackingPrinciples: ScrollView rendering complete.")}
     </LinearGradient>
   );
 };
@@ -130,7 +177,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#FFD300',
     marginBottom: 20,
     textAlign: 'center',
     textShadowColor: '#000',
