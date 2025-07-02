@@ -1,7 +1,3 @@
-```typescript
-// REWRITTEN FILE: app/app/screens/WinningAttackingStrategies.tsx
-// TOTAL_LOGS_INSERTED: 24
-// COMPONENT_NAME: WinningAttackingStrategies
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
