@@ -4,87 +4,100 @@ import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/
 import { db } from '../firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
 
-const DefensiveFundTable = () => {
-  console.log("DefensiveFundTable: Component mounted."); // 1. Component Lifecycle
+const DefensiveFundtable = () => {
+  console.log("DefensiveFundtable: Component is mounting.");
 
   const [fundData, setFundData] = useState([]);
+  console.log("DefensiveFundtable: fundData state initialized as empty array.");
   const [loading, setLoading] = useState(true);
+  console.log("DefensiveFundtable: loading state initialized to true.");
   const [error, setError] = useState(null);
+  console.log("DefensiveFundtable: error state initialized to null.");
   const [refreshing, setRefreshing] = useState(false);
-  console.log("DefensiveFundTable: State variables initialized (fundData, loading, error, refreshing)."); // 2. State Change
+  console.log("DefensiveFundtable: refreshing state initialized to false.");
 
   const navigation = useNavigation();
-  console.log("DefensiveFundTable: useNavigation hook initialized."); // 3. Navigation & UI
+  console.log("DefensiveFundtable: Navigation hook initialized.");
 
   const fetchFundData = async () => {
-    console.log("DefensiveFundTable: fetchFundData initiated."); // 4. Data Operation
+    console.log("DefensiveFundtable: Data fetching process initiated.");
     setLoading(true);
-    console.log("DefensiveFundTable: Loading state set to true for data fetch."); // 5. State Change
+    console.log("DefensiveFundtable: Loading state set to true.");
     setError(null);
+    console.log("DefensiveFundtable: Error state reset to null.");
 
     try {
-      console.log("DefensiveFundTable: Attempting to fetch fund table configuration."); // 6. Data Operation
+      console.log("DefensiveFundtable: Attempting to retrieve 'fund_table_config' from 'general' collection.");
       const docRef = doc(db, "general", "fund_table_config");
       const docSnap = await getDoc(docRef);
+      console.log("DefensiveFundtable: 'fund_table_config' document fetch attempt completed.");
 
       if (docSnap.exists()) {
-        console.log("DefensiveFundTable: Fund table configuration found. Proceeding to fetch fund data."); // 7. Conditional Logic, Data Operation
+        console.log("DefensiveFundtable: 'fund_table_config' found. Preparing to fetch fund data.");
         const config = docSnap.data();
         const collectionName = config.collection_name;
         const subcollectionField = config.subcollection_field;
+        console.log(`DefensiveFundtable: Configuration loaded. Collection name: '${collectionName}', Subcollection field: '${subcollectionField || "N/A"}'.`);
 
         const q = query(collection(db, collectionName), where("visible", "==", true), limit(50));
+        console.log(`DefensiveFundtable: Querying collection '${collectionName}' for visible funds (limit 50).`);
         const querySnapshot = await getDocs(q);
-        console.log(`DefensiveFundTable: Fetched ${querySnapshot.docs.length} visible fund documents from '${collectionName}'.`); // 8. Data Operation
+        console.log(`DefensiveFundtable: Fetched ${querySnapshot.docs.length} visible fund documents.`);
 
         const dataPromises = querySnapshot.docs.map(async (fundDoc) => {
           const fund = fundDoc.data();
           const fundId = fundDoc.id;
+          console.log(`DefensiveFundtable: Processing fund document with ID: ${fundId}.`);
 
           if (subcollectionField && fund[subcollectionField]) {
-            console.log(`DefensiveFundTable: Fetching performance data for fund ${fundId}.`); // 9. Data Operation
+            console.log(`DefensiveFundtable: Subcollection field '${subcollectionField}' found for fund '${fundId}'. Fetching performance data.`);
             const subCollectionRef = collection(db, collectionName, fundId, fund[subcollectionField]);
             const subCollectionSnapshot = await getDocs(subCollectionRef);
             const performanceData = subCollectionSnapshot.docs.map(doc => doc.data());
             fund.performance = performanceData.sort((a, b) => a.date.seconds - b.date.seconds);
-            console.log(`DefensiveFundTable: Performance data fetched for fund ${fundId}.`); // 10. Data Operation
+            console.log(`DefensiveFundtable: Performance data fetched and sorted for fund '${fundId}'. Items: ${performanceData.length}`);
+          } else {
+            console.log(`DefensiveFundtable: No subcollection field '${subcollectionField}' or data found for fund '${fundId}'. Skipping performance data fetch.`);
           }
           return { id: fundId, ...fund };
         });
 
         const allFundData = await Promise.all(dataPromises);
         setFundData(allFundData);
-        console.log(`DefensiveFundTable: Fund data updated with ${allFundData.length} items.`); // 11. State Change, Data Operation Success
+        console.log(`DefensiveFundtable: Fund data successfully updated with ${allFundData.length} items.`);
       } else {
-        console.log("DefensiveFundTable: Fund table configuration not found."); // 12. Conditional Logic, Error Scenario
+        console.log("DefensiveFundtable: Fund table configuration document not found in Firestore.");
         Alert.alert("Error", "Fund table configuration not found.");
-        console.log("DefensiveFundTable: Alert 'Fund table configuration not found' displayed."); // 13. Navigation & UI
+        console.log("DefensiveFundtable: Alert 'Fund table configuration not found' is displayed.");
         setError("Fund table configuration not found.");
-        console.log("DefensiveFundTable: Error state set: 'Fund table configuration not found'."); // 14. State Change
+        console.log("DefensiveFundtable: Error state updated to 'Fund table configuration not found'.");
       }
     } catch (e) {
-      console.log(`DefensiveFundTable: Error fetching fund data: ${e.message}`); // 15. Error Scenarios
-      console.error("Error fetching fund data:", e);
+      console.log(`DefensiveFundtable: Error occurred during fund data fetch: ${e.message}`);
+      console.error("DefensiveFundtable: Detailed error:", e);
       setError(e.message);
-      console.log(`DefensiveFundTable: Error state set to: ${e.message}.`); // 16. State Change
+      console.log(`DefensiveFundtable: Error state updated to: '${e.message}'.`);
       Alert.alert("Error", "Failed to fetch fund data: " + e.message);
-      console.log("DefensiveFundTable: Alert 'Failed to fetch fund data' displayed."); // 17. Navigation & UI
+      console.log("DefensiveFundtable: Alert 'Failed to fetch fund data' is displayed.");
     } finally {
       setLoading(false);
       setRefreshing(false);
-      console.log("DefensiveFundTable: Data fetch complete. Loading and refreshing states set to false."); // 18. State Change, Data Operation Complete
+      console.log("DefensiveFundtable: Data fetch process completed. Loading and refreshing states set to false.");
     }
   };
 
   useEffect(() => {
-    console.log("DefensiveFundTable: useEffect triggered for initial data load."); // 19. Component Lifecycle
+    console.log("DefensiveFundtable: useEffect hook triggered for initial data load.");
     fetchFundData();
+    return () => {
+      console.log("DefensiveFundtable: useEffect cleanup function executed.");
+    };
   }, []);
 
   const onRefresh = () => {
-    console.log("DefensiveFundTable: onRefresh initiated by user."); // 20. User Interaction
+    console.log("DefensiveFundtable: User initiated a refresh action.");
     setRefreshing(true);
-    console.log("DefensiveFundTable: Refreshing state set to true."); // 21. State Change
+    console.log("DefensiveFundtable: Refreshing state set to true.");
     fetchFundData();
   };
 
@@ -94,14 +107,14 @@ const DefensiveFundTable = () => {
     return (
       <View style={styles.card}>
         <TouchableOpacity onPress={() => {
-          console.log(`DefensiveFundTable: Card for fund '${item.name}' pressed.`); // 22. User Interaction
+          console.log(`DefensiveFundtable: Card for fund '${item.name}' (ID: ${item.id}) is pressed.`);
           if (item.symbol) {
-            console.log(`DefensiveFundTable: Navigating to DefensiveFundDetail for symbol: ${item.symbol}`); // 23. Navigation & UI, Conditional Logic
+            console.log(`DefensiveFundtable: Navigating to 'DefensiveFundDetail' screen with symbol: '${item.symbol}'.`);
             navigation.navigate('DefensiveFundDetail', { symbol: item.symbol, name: item.name });
           } else {
-            console.log("DefensiveFundTable: Fund symbol not available for navigation. Alerting user."); // 24. Conditional Logic, Error Scenarios
+            console.log("DefensiveFundtable: Fund symbol is not available for navigation. Displaying error alert.");
             Alert.alert("Error", "Fund symbol not available.");
-            console.log("DefensiveFundTable: Alert 'Fund symbol not available' displayed."); // 25. Navigation & UI
+            console.log("DefensiveFundtable: Alert 'Fund symbol not available' is displayed.");
           }
         }}>
           <Text style={styles.fundName}>{item.name}</Text>
@@ -116,7 +129,7 @@ const DefensiveFundTable = () => {
   };
 
   if (loading && fundData.length === 0) {
-    console.log("DefensiveFundTable: Displaying initial loading indicator."); // 26. Conditional Logic, UI
+    console.log("DefensiveFundtable: Conditional rendering: Displaying initial loading indicator as no data is loaded yet.");
     return (
       <View style={styles.centeredView}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -126,7 +139,7 @@ const DefensiveFundTable = () => {
   }
 
   if (error) {
-    console.log(`DefensiveFundTable: Displaying error screen. Current error: ${error}`); // 27. Conditional Logic, Error Scenarios, UI
+    console.log(`DefensiveFundtable: Conditional rendering: Displaying error screen with message: '${error}'.`);
     return (
       <View style={styles.centeredView}>
         <Text style={styles.errorText}>Error: {error}</Text>
@@ -137,7 +150,7 @@ const DefensiveFundTable = () => {
     );
   }
 
-  console.log("DefensiveFundTable: Rendering main FlatList with fund data."); // 28. Component Lifecycle, UI
+  console.log("DefensiveFundtable: Conditional rendering: Displaying main FlatList with fetched fund data.");
   return (
     <View style={styles.container}>
       <FlatList
@@ -218,4 +231,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DefensiveFundTable;
+export default DefensiveFundtable;
