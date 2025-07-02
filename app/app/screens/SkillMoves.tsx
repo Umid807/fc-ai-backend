@@ -315,7 +315,7 @@ const skillMovesData = [
       },
       {
         name: 'Elastico Chop Left',
-        ps: 'Hold R2 & R1 + roll RS along bottom right to left',
+        ps: 'Hold RT & RB + roll RS along bottom right to left',
         xbox: 'Hold RT & RB + roll RS along bottom right to left',
       },
       {
@@ -365,8 +365,8 @@ const skillMovesData = [
       },
       {
         name: 'Around The World',
-        ps: 'Hold L2 + RS 360° clockwise or anticlockwise',
-        xbox: 'Hold LT + RS 360° clockwise or anticlockwise',
+        ps: 'Hold L2 + RS 360 clockwise or anticlockwise',
+        xbox: 'Hold LT + RS 360 clockwise or anticlockwise',
       },
       {
         name: 'In Air Elastico',
@@ -390,29 +390,36 @@ const skillMovesData = [
       },
       {
         name: 'T. Around The World',
-        ps: 'Hold L2 + RS 360° clockwise then RS flick up',
-        xbox: 'Hold LT + RS 360° clockwise then RS flick up',
+        ps: 'Hold L2 + RS 360 clockwise then RS flick up',
+        xbox: 'Hold LT + RS 360 clockwise then RS flick up',
       },
     ],
   },
 ];
 
 const SkillMoves = () => {
+  console.log("SkillMoves: Component mounted successfully.");
   // We'll store expanded moves in a Set keyed by "catIndex-moveIndex"
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  console.log("SkillMoves: Initial state 'expanded' set to empty. Current size: " + expanded.size);
 
   const toggleExpand = (key: string) => {
+    console.log("SkillMoves: toggleExpand function called for key: " + key);
     setExpanded((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(key)) {
+        console.log("SkillMoves: Removing key from expanded set: " + key);
         newSet.delete(key);
       } else {
+        console.log("SkillMoves: Adding key to expanded set: " + key);
         newSet.add(key);
       }
+      console.log("SkillMoves: 'expanded' state updated. New size: " + newSet.size);
       return newSet;
     });
   };
 
+  console.log("SkillMoves: Rendering main component UI.");
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>FC 25 Skill Moves Guide</Text>
@@ -422,25 +429,32 @@ const SkillMoves = () => {
           {category.moves.map((move, moveIndex) => {
             const key = `${catIndex}-${moveIndex}`;
             const isExpanded = expanded.has(key);
+            console.log("SkillMoves: Processing move '" + move.name + "'. Key: " + key + ". Is Expanded: " + isExpanded);
             return (
               <View key={key} style={styles.card}>
                 <TouchableOpacity
-                  onPress={() => toggleExpand(key)}
+                  onPress={() => {
+                    console.log("SkillMoves: Card header pressed for move: " + move.name + ", key: " + key);
+                    toggleExpand(key);
+                  }}
                   style={styles.cardHeader}
                 >
                   <Text style={styles.moveName}>{move.name}</Text>
                 </TouchableOpacity>
                 {isExpanded && (
-                  <View style={styles.details}>
-                    <Text style={styles.instruction}>
-                      <Text style={styles.bold}>PS4/PS5:</Text> {move.ps}
-                    </Text>
-                    <Text style={styles.instruction}>
-                      <Text style={styles.bold}>Xbox One/Series X:</Text> {move.xbox}
-                    </Text>
-                    
-                  </View>
+                  <>
+                    {console.log("SkillMoves: Details section visible for move: " + move.name)}
+                    <View style={styles.details}>
+                      <Text style={styles.instruction}>
+                        <Text style={styles.bold}>PS4/PS5:</Text> {move.ps}
+                      </Text>
+                      <Text style={styles.instruction}>
+                        <Text style={styles.bold}>Xbox One/Series X:</Text> {move.xbox}
+                      </Text>
+                    </View>
+                  </>
                 )}
+                {!isExpanded && console.log("SkillMoves: Details section hidden for move: " + move.name)}
               </View>
             );
           })}
