@@ -37,6 +37,7 @@ import { getAuth } from 'firebase/auth';
 import { firebaseConfig } from '../firebaseConfig';
 
 // === INITIALIZE FIREBASE & FIRESTORE ===
+console.log("DrawPageAdvanced: Initializing Firebase app.");
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -44,32 +45,37 @@ const auth = getAuth(app);
 const { width, height } = Dimensions.get('window');
 const hp = (percentage) => (height * percentage) / 100;
 
-// ==========================================
+// =====================================
 // HELPER FUNCTION: Compute Next Friday 6PM UTC
-// ==========================================
+// =====================================
 const getNextFriday6PMUTC = () => {
+  console.log("DrawPageAdvanced: Calculating next Friday 6 PM UTC.");
   const now = new Date();
   // Get current UTC values
   const utcNow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds()));
   let dayOfWeek = utcNow.getUTCDay(); // 0 (Sun) ... 6 (Sat)
   let daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+
   // If today is Friday and it's already 6PM or later, jump to next week
   if (daysUntilFriday === 0 && utcNow.getUTCHours() >= 18) {
+    console.log("DrawPageAdvanced: Today is Friday past 6 PM UTC, jumping to next week for countdown.");
     daysUntilFriday = 7;
   }
   const nextFriday = new Date(Date.UTC(utcNow.getUTCFullYear(), utcNow.getUTCMonth(), utcNow.getUTCDate() + daysUntilFriday, 18, 0, 0));
   return nextFriday.getTime() - utcNow.getTime();
 };
 
-// ====================
+// =============================
 // Reusable Components
-// ====================
+// =============================
 
 // Displays a single candidate with image & name
 const CandidateCard = ({ username, profileImage }) => {
+  console.log(`CandidateCard: Component mounted for user: ${username}`);
   const glowAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    console.log(`CandidateCard: Starting glow animation loop for ${username}.`);
     Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, {
@@ -83,7 +89,9 @@ const CandidateCard = ({ username, profileImage }) => {
           useNativeDriver: false,
         }),
       ])
-    ).start();
+    ).start(() => {
+      console.log(`CandidateCard: Glow animation completed for ${username}.`);
+    });
   }, []);
 
   const animatedStyle = {
@@ -110,8 +118,9 @@ const CandidateCard = ({ username, profileImage }) => {
 
 // Winner Card updated to display a consistent container using bk.png as background
 const WinnerCard = ({ winner, prize }) => {
+  console.log(`WinnerCard: Component mounted for winner: ${winner.username}`);
   return (
-    <ImageBackground 
+    <ImageBackground
       source={require('../../assets/images/drawingprocess.png')}
       style={styles.winnerCardContainer}
       imageStyle={styles.winnerCardBackground}
@@ -141,8 +150,9 @@ const WinnerCard = ({ winner, prize }) => {
 
 // Simple overlay to show colored aura during phase transitions (if needed)
 const TransitionOverlay = ({ phase, visible }) => {
+  console.log(`TransitionOverlay: Component mounted for phase: ${phase}, visible: ${visible}.`);
   let auraColor = 'transparent';
-  if (phase === 'progressBar') auraColor = 'rgba(0, 0, 255, 0)';
+  if (phase === 'progressBar') auraColor = 'rgba(0, 0, 255, 0)'; // Blue aura for progress bar phase
   return visible ? (
     <View style={[styles.transitionOverlay, { backgroundColor: auraColor }]}>
       <Text style={styles.transitionText}>Drawing Winners...</Text>
@@ -150,11 +160,12 @@ const TransitionOverlay = ({ phase, visible }) => {
   ) : null;
 };
 
-// ====================
+// =============================
 // Main Component
-// ====================
+// =============================
 
 const DrawPageAdvanced = () => {
+  console.log("DrawPageAdvanced: Component function started.");
   const glowOpacity = useRef(new Animated.Value(0.3)).current;
   const colorGlow1 = useRef(new Animated.Value(0)).current;
   const colorGlow2 = useRef(new Animated.Value(0)).current;
@@ -163,9 +174,10 @@ const DrawPageAdvanced = () => {
   // Helper delay function
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  // =======================================
+  // =====================================
   // STATE VARIABLES & REFERENCES
-  // =======================================
+  // =====================================
+  console.log("DrawPageAdvanced: Initializing state variables.");
   // Use the real countdown to next Friday 6PM UTC
   const [timeLeft, setTimeLeft] = useState(getNextFriday6PMUTC());
   const [userTickets, setUserTickets] = useState(0);
@@ -174,7 +186,7 @@ const DrawPageAdvanced = () => {
   const [username, setUsername] = useState('Guest');
   const [profileImage, setProfileImage] = useState(null);
   const [isVip, setIsVip] = useState(false);
-  
+
   // Live draw & winners state variables
   const [isLive, setIsLive] = useState(false);
   const [winner, setWinner] = useState(null);
@@ -184,7 +196,7 @@ const DrawPageAdvanced = () => {
 
   // Leaderboard (top 5 by "entries")
   const [leaderboard, setLeaderboard] = useState([]);
-  
+
   // Timer control
   const [timerPaused, setTimerPaused] = useState(false);
 
@@ -204,6 +216,7 @@ const DrawPageAdvanced = () => {
   const castGlow = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    console.log("DrawPageAdvanced: Starting cast glow animation loop.");
     Animated.loop(
       Animated.sequence([
         Animated.timing(castGlow, {
@@ -217,45 +230,62 @@ const DrawPageAdvanced = () => {
           useNativeDriver: false,
         }),
       ])
-    ).start();
+    ).start(() => {
+      console.log("DrawPageAdvanced: Cast glow animation loop completed.");
+    });
   }, []);
-  
+
   // Raffle Pool Data
   const [rafflePool, setRafflePool] = useState([]);
 
   // On mount, fetch/listen to "raffle pool" collection from Firestore
   useEffect(() => {
-    const colRef = collection(db, 'raffle pool'); 
+    console.log("DrawPageAdvanced: Subscribing to raffle pool updates.");
+    const colRef = collection(db, 'raffle pool');
     const unsub = onSnapshot(colRef, (snapshot) => {
       const data = [];
+      let total = 0;
       snapshot.forEach((docSnap) => {
-        data.push(docSnap.data());
+        const docData = docSnap.data();
+        data.push(docData);
+        total += docData.lockedTickets || 0;
       });
       setRafflePool(data);
+      setPoolTickets(total);
+      console.log(`DrawPageAdvanced: Raffle pool data updated. Total pool tickets: ${total}.`);
     });
-    return () => unsub();
+    return () => {
+      console.log("DrawPageAdvanced: Unsubscribing from raffle pool updates.");
+      unsub();
+    };
   }, []);
 
-  // =======================================
+  // =====================================
   // HELPER: Reset all user "entries" to 0 (to clear leaderboard)
-  // =======================================
+  // =====================================
   const resetAllEntries = async () => {
+    console.log("DrawPageAdvanced: Attempting to reset all user entries to 0.");
     try {
       const q = query(collection(db, 'users'), where('entries', '>', 0));
+      console.log("DrawPageAdvanced: Querying users with entries > 0.");
       const querySnapshot = await getDocs(q);
       const batch = writeBatch(db);
+      console.log("DrawPageAdvanced: Initializing batch write for resetting entries.");
       querySnapshot.forEach((docSnap) => {
         batch.update(docSnap.ref, { entries: 0 });
+        console.log(`DrawPageAdvanced: User entries marked for reset for doc: ${docSnap.id}.`);
       });
       await batch.commit();
-      console.log('Debug: All user entries have been reset to 0.');
+      console.log('DrawPageAdvanced: All user entries have been reset to 0.');
     } catch (error) {
-      console.error('Error resetting entries:', error);
+      console.error('DrawPageAdvanced: Error resetting entries:', error);
+      Alert.alert('Error', 'Failed to reset user entries.');
     }
   };
 
   // Listen to poolTickets from Firestore ("draw/current" document)
   useEffect(() => {
+    console.log("DrawPageAdvanced: Subscribing to draw/current document for pool tickets.");
     const colRef = collection(db, 'raffle pool');
     const unsubscribe = onSnapshot(colRef, (snapshot) => {
       let total = 0;
@@ -264,35 +294,46 @@ const DrawPageAdvanced = () => {
         total += data.lockedTickets || 0;
       });
       setPoolTickets(total);
+      console.log(`DrawPageAdvanced: Pool tickets updated to: ${total}.`);
     });
-    return () => unsubscribe();
+    return () => {
+      console.log("DrawPageAdvanced: Unsubscribing from draw/current pool tickets.");
+      unsubscribe();
+    };
   }, []);
-  
+
   // Listen to current user's document in Firestore
   useEffect(() => {
+    console.log("DrawPageAdvanced: Subscribing to current user document updates.");
     const currentUser = auth.currentUser;
     if (!currentUser) {
-      console.warn('Debug: No user logged in. Cannot fetch user data.');
+      console.warn('DrawPageAdvanced: No user logged in. Cannot fetch user data.');
       return;
     }
     const userDocRef = doc(db, 'users', currentUser.uid);
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
+        console.log("DrawPageAdvanced: User document data updated.");
         setUsername(data.username || 'Guest');
         setProfileImage(data.profileImage || null);
         setUserTickets(data.raffleTickets || 0);
         setUserEntries(data.entries || 0);
         setIsVip(data.vip === true);
+        console.log(`DrawPageAdvanced: Username: ${data.username}, Tickets: ${data.raffleTickets}, Entries: ${data.entries}, VIP: ${data.vip}.`);
       } else {
-        console.warn('Debug: User document not found. Please ensure it is created at signup.');
+        console.warn('DrawPageAdvanced: User document not found. Please ensure it is created at signup.');
       }
     });
-    return () => unsubscribe();
+    return () => {
+      console.log("DrawPageAdvanced: Unsubscribing from user document updates.");
+      unsubscribe();
+    };
   }, []);
 
   // Listen to leaderboard data: top 5 users by "entries"
   useEffect(() => {
+    console.log("DrawPageAdvanced: Subscribing to leaderboard (top 5 users by entries) updates.");
     const q = query(collection(db, 'users'), orderBy('entries', 'desc'), limit(5));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = [];
@@ -301,35 +342,49 @@ const DrawPageAdvanced = () => {
           name: doc.data().username || doc.id,
           tickets: doc.data().entries || 0,
         });
+        console.log(`DrawPageAdvanced: Leaderboard entry: ${doc.data().username || doc.id} with ${doc.data().entries} entries.`);
       });
       setLeaderboard(data);
+      console.log("DrawPageAdvanced: Leaderboard data updated.");
     });
-    return () => unsubscribe();
+    return () => {
+      console.log("DrawPageAdvanced: Unsubscribing from leaderboard updates.");
+      unsubscribe();
+    };
   }, []);
 
-  // =======================================
+  // =====================================
   // COUNTDOWN LOGIC
-  // =======================================
+  // =====================================
   useEffect(() => {
-    if (timerPaused || isLive) return;
+    console.log("DrawPageAdvanced: Initializing countdown timer.");
+    if (timerPaused || isLive) {
+      console.log(`DrawPageAdvanced: Timer paused (${timerPaused}) or Live (${isLive}). Skipping timer update.`);
+      return;
+    }
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1000) {
           clearInterval(timer);
-          console.log('Debug: Countdown finished. Starting live draw.');
+          console.log('DrawPageAdvanced: Countdown finished. Starting live draw process.');
           setTimeLeft(0);
           setTimeout(() => startLiveDraw(), 1000);
           return 0;
         }
+        console.log(`DrawPageAdvanced: Time left: ${prev - 1000}ms.`);
         return prev - 1000;
       });
     }, 1000);
-    return () => clearInterval(timer);
+    return () => {
+      console.log("DrawPageAdvanced: Cleaning up countdown timer.");
+      clearInterval(timer);
+    };
   }, [timerPaused, isLive]);
 
   // Glow effect in the final 10 seconds
   useEffect(() => {
     if (timeLeft <= 10000 && timeLeft > 0) {
+      console.log(`DrawPageAdvanced: Countdown glow animation triggered. Time left: ${timeLeft}ms.`);
       Animated.loop(
         Animated.sequence([
           Animated.timing(countdownGlow, {
@@ -343,13 +398,19 @@ const DrawPageAdvanced = () => {
             useNativeDriver: false,
           }),
         ])
-      ).start();
+      ).start(() => {
+        console.log("DrawPageAdvanced: Countdown glow animation completed.");
+      });
+    } else {
+      countdownGlow.setValue(0); // Reset glow if outside 10-second window
     }
   }, [timeLeft]);
 
   useEffect(() => {
+    console.log(`DrawPageAdvanced: Current phase changed to: ${currentPhase}.`);
     if (currentPhase === 'progressBar') {
-      // 🔹 Start base pulsing glow
+      // ⚡ Start base pulsing glow
+      console.log("DrawPageAdvanced: Starting live draw pulsating glow animation.");
       Animated.loop(
         Animated.sequence([
           Animated.timing(glowOpacity, {
@@ -366,6 +427,7 @@ const DrawPageAdvanced = () => {
       ).start();
 
       // 🌈 Start rotating color layers
+      console.log("DrawPageAdvanced: Starting rotating color layers animation.");
       Animated.loop(
         Animated.sequence([
           Animated.timing(colorGlow1, {
@@ -414,22 +476,25 @@ const DrawPageAdvanced = () => {
       ).start();
     }
   }, [currentPhase]);
-  
-  // =======================================
+
+  // =====================================
   // Ticket Submission
-  // =======================================
+  // =====================================
   const handleSubmitTickets = () => {
+    console.log("DrawPageAdvanced: Handle submit tickets initiated.");
     const currentUser = auth.currentUser;
     if (!currentUser) {
+      console.log('DrawPageAdvanced: User not logged in. Alerting to log in.');
       Alert.alert('Not Logged In', 'Please log in before submitting tickets.');
       return;
     }
     if (userTickets <= 0) {
+      console.log('DrawPageAdvanced: No tickets to submit. Alerting.');
       Alert.alert('No Tickets', 'You have no tickets left to submit.');
       return;
     }
 
-    console.log('Debug: Submitting ticket for user:', currentUser.uid);
+    console.log(`DrawPageAdvanced: Initiating ticket submission animation for user: ${currentUser.uid}.`);
     Animated.sequence([
       Animated.timing(ticketAnim, {
         toValue: 1,
@@ -445,49 +510,69 @@ const DrawPageAdvanced = () => {
         useNativeDriver: true,
       }),
     ]).start(() => {
+      console.log("DrawPageAdvanced: Ticket submission animation completed. Triggering confetti and transaction.");
       setTicketConfettiVisible(true);
-      setTimeout(() => setTicketConfettiVisible(false), 2000);
+      console.log("DrawPageAdvanced: Ticket confetti visibility set to true.");
+      setTimeout(() => {
+        setTicketConfettiVisible(false);
+        console.log("DrawPageAdvanced: Ticket confetti visibility set to false after 2000ms.");
+      }, 2000);
       submitTicketTransaction(currentUser);
     });
   };
 
   const submitTicketTransaction = async (currentUser) => {
+    console.log(`DrawPageAdvanced: Starting ticket submission transaction for user: ${currentUser.uid}.`);
     const poolDocRef = doc(db, 'draw', 'current');
     const userDocRef = doc(db, 'users', currentUser.uid);
     const raffleUserDocRef = doc(db, 'raffle pool', currentUser.uid); // key for individual user in raffle pool
-  
+
     try {
       await runTransaction(db, async (transaction) => {
+        console.log("DrawPageAdvanced: Fetching pool, user, and raffle user documents within transaction.");
         const poolDoc = await transaction.get(poolDocRef);
         const userDoc = await transaction.get(userDocRef);
         const raffleDoc = await transaction.get(raffleUserDocRef);
-  
-        if (!poolDoc.exists()) throw new Error("draw/current doesn't exist.");
-        if (!userDoc.exists()) throw new Error("User doc doesn't exist.");
-  
+
+        if (!poolDoc.exists()) {
+          console.error("DrawPageAdvanced: Error: draw/current document does not exist.");
+          throw new Error("draw/current doesn't exist.");
+        }
+        if (!userDoc.exists()) {
+          console.error("DrawPageAdvanced: Error: User doc doesn't exist.");
+          throw new Error("User doc doesn't exist.");
+        }
+
         const userData = userDoc.data();
         const currentPool = poolDoc.data().poolTickets || 0;
         const currentRaffleTickets = userData.raffleTickets || 0;
         const currentEntries = userData.entries || 0;
-  
-        if (currentRaffleTickets <= 0) throw new Error('No tickets to submit.');
-  
+
+        if (currentRaffleTickets <= 0) {
+          console.warn('DrawPageAdvanced: User tried to submit ticket with 0 raffleTickets.');
+          throw new Error('No tickets to submit.');
+        }
+
         // ✅ Update draw pool and user
+        console.log(`DrawPageAdvanced: Updating pool tickets from ${currentPool} to ${currentPool + 1}.`);
         transaction.update(poolDocRef, { poolTickets: currentPool + 1 });
+        console.log(`DrawPageAdvanced: Updating user tickets from ${currentRaffleTickets} to ${currentRaffleTickets - 1} and entries from ${currentEntries} to ${currentEntries + 1}.`);
         transaction.update(userDocRef, {
           raffleTickets: currentRaffleTickets - 1,
           entries: currentEntries + 1,
         });
-  
+
         // ✅ Update raffle pool
         if (raffleDoc.exists()) {
           // Increment lockedTickets
           const currentLocked = raffleDoc.data().lockedTickets || 0;
+          console.log(`DrawPageAdvanced: Raffle user document exists. Updating locked tickets from ${currentLocked} to ${currentLocked + 1}.`);
           transaction.update(raffleUserDocRef, {
             lockedTickets: currentLocked + 1,
           });
         } else {
           // Create new doc in raffle pool
+          console.log(`DrawPageAdvanced: Raffle user document does not exist. Creating new entry for user: ${userData.username || 'Anonymous'}.`);
           transaction.set(raffleUserDocRef, {
             enteredTime: new Date().toLocaleString('en-US', {
               timeZone: 'America/New_York',
@@ -500,21 +585,18 @@ const DrawPageAdvanced = () => {
           });
         }
       });
-  
-      console.log('Debug: Ticket submitted & raffle pool updated.');
+      console.log('DrawPageAdvanced: Ticket submitted and raffle pool updated successfully.');
       setTicketConfettiVisible(true);
       setTimeout(() => setTicketConfettiVisible(false), 2000);
     } catch (error) {
-      console.error('Ticket submission error:', error);
+      console.error('DrawPageAdvanced: Error during ticket submission transaction:', error);
       Alert.alert('Error', error.message);
     }
   };
-  
-  // =======================================
-  // LIVE DRAW & PROGRESS BAR ANIMATION
-  // =======================================
+
   // Helper function to shuffle an array
   const shuffleArray = (array) => {
+    console.log("DrawPageAdvanced: Shuffling array.");
     const copy = [...array];
     for (let i = copy.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -525,20 +607,25 @@ const DrawPageAdvanced = () => {
 
   // Function to update the winnersOfTheWeek collection in Firestore:
   const updateWinnersOfTheWeek = async (computedWinners) => {
+    console.log("DrawPageAdvanced: Attempting to update 'winnerOfTheWeek' collection.");
     try {
-      console.log('Debug: Updating winnersOfTheWeek collection...');
       // Clear the collection first
       const winnersCollectionRef = collection(db, 'winnerOfTheWeek');
       const snapshot = await getDocs(winnersCollectionRef);
       const batchClear = writeBatch(db);
+      console.log("DrawPageAdvanced: Clearing existing 'winnerOfTheWeek' collection.");
       snapshot.forEach((docSnap) => {
         batchClear.delete(docSnap.ref);
+        console.log(`DrawPageAdvanced: Marking doc ${docSnap.id} for deletion from winnerOfTheWeek.`);
       });
       await batchClear.commit();
-      console.log('Debug: winnerOfTheWeek collection cleared.');
+      console.log('DrawPageAdvanced: Existing winnerOfTheWeek collection cleared.');
 
       // Add new winners
       let batchAdd = writeBatch(db);
+      console.log("DrawPageAdvanced: Initializing batch write for adding new winners.");
+
+      console.log("DrawPageAdvanced: Adding Tier 1 winners.");
       computedWinners.tier1.forEach((winner) => {
         const docRef = doc(collection(db, 'winnerOfTheWeek'));
         batchAdd.set(docRef, {
@@ -549,6 +636,7 @@ const DrawPageAdvanced = () => {
           prize: 'Grand Prize',
         });
       });
+      console.log("DrawPageAdvanced: Adding Tier 2 winners.");
       computedWinners.tier2.forEach((winner) => {
         const docRef = doc(collection(db, 'winnerOfTheWeek'));
         batchAdd.set(docRef, {
@@ -559,6 +647,7 @@ const DrawPageAdvanced = () => {
           prize: 'Runner-Up Prize',
         });
       });
+      console.log("DrawPageAdvanced: Adding Tier 3 winners.");
       computedWinners.tier3.forEach((winner) => {
         const docRef = doc(collection(db, 'winnerOfTheWeek'));
         batchAdd.set(docRef, {
@@ -570,152 +659,217 @@ const DrawPageAdvanced = () => {
         });
       });
       await batchAdd.commit();
-      console.log('Debug: Winners added to winnerOfTheWeek collection.');
+      console.log('DrawPageAdvanced: New winners added to winnerOfTheWeek collection.');
     } catch (error) {
-      console.error('Error updating winnerOfTheWeek collection:', error);
+      console.error('DrawPageAdvanced: Error updating winnerOfTheWeek collection:', error);
+      Alert.alert('Error', 'Failed to update winners of the week.');
     }
   };
 
   // Transition function to compute winners and show winners subpage
   const transitionToWinners = async () => {
-    console.log('Debug: Transitioning to winners...');
+    console.log("DrawPageAdvanced: Initiating transition to winners screen.");
 
     let computedWinners = { tier1: [], tier2: [], tier3: [] };
     if (!rafflePool || rafflePool.length === 0) {
-      console.log('Debug: No entries in raffle pool. Creating empty winners data.');
+      console.warn("DrawPageAdvanced: No entries in raffle pool. Creating empty winners data.");
+      setWinnersData(computedWinners);
     } else {
       const totalTickets = rafflePool.reduce((sum, user) => sum + (user.lockedTickets || 0), 0);
+      console.log(`DrawPageAdvanced: Total tickets for winner computation: ${totalTickets}.`);
+
       const flatEntries = [];
+      console.log("DrawPageAdvanced: Flattening entries for shuffling.");
       rafflePool.forEach((user) => {
         const tickets = user.lockedTickets || 0;
         for (let i = 0; i < tickets; i++) {
           flatEntries.push(user);
         }
       });
+
       const shuffled = shuffleArray(flatEntries);
+      console.log("DrawPageAdvanced: Shuffled entries successfully.");
+
+      // Calculate number of winners for each tier based on total tickets
+      // Ensure at least 1 winner per tier if tickets available for that tier
       const tier1Count = Math.max(1, Math.floor(totalTickets * 0.01));
       const tier2Count = Math.max(1, Math.floor(totalTickets * 0.02));
       const tier3Count = Math.max(1, Math.floor(totalTickets * 0.05));
+      console.log(`DrawPageAdvanced: Calculated Tier 1 count: ${tier1Count}, Tier 2 count: ${tier2Count}, Tier 3 count: ${tier3Count}.`);
 
-      computedWinners.tier1 = shuffled.slice(0, tier1Count);
-      computedWinners.tier2 = shuffled.slice(tier1Count, tier1Count + tier2Count);
-      computedWinners.tier3 = shuffled.slice(tier1Count + tier2Count, tier1Count + tier2Count + tier3Count);
-      
-      console.log('Debug: Computed winners:', computedWinners);
+
+      // Distribute winners
+      let currentIdx = 0;
+
+      if (shuffled.length > 0) {
+        // Tier 1 winners
+        for (let i = 0; i < tier1Count && currentIdx < shuffled.length; i++) {
+          const winner = shuffled[currentIdx];
+          // Check if winner is already in Tier 1 to avoid duplicates
+          if (!computedWinners.tier1.some(w => w.userId === winner.userId)) {
+            computedWinners.tier1.push(winner);
+          }
+          currentIdx++;
+        }
+      }
+
+      // Tier 2 winners
+      if (shuffled.length > currentIdx) {
+        for (let i = 0; i < tier2Count && currentIdx < shuffled.length; i++) {
+          const winner = shuffled[currentIdx];
+          // Check if winner is already in Tier 1 or Tier 2
+          if (!computedWinners.tier1.some(w => w.userId === winner.userId) &&
+              !computedWinners.tier2.some(w => w.userId === winner.userId)) {
+            computedWinners.tier2.push(winner);
+          }
+          currentIdx++;
+        }
+      }
+
+      // Tier 3 winners
+      if (shuffled.length > currentIdx) {
+        for (let i = 0; i < tier3Count && currentIdx < shuffled.length; i++) {
+          const winner = shuffled[currentIdx];
+          // Check if winner is already in Tier 1, Tier 2, or Tier 3
+          if (!computedWinners.tier1.some(w => w.userId === winner.userId) &&
+              !computedWinners.tier2.some(w => w.userId === winner.userId) &&
+              !computedWinners.tier3.some(w => w.userId === winner.userId)) {
+            computedWinners.tier3.push(winner);
+          }
+          currentIdx++;
+        }
+      }
+
+      setWinnersData(computedWinners);
+      console.log(`DrawPageAdvanced: Winners computed: Tier 1: ${computedWinners.tier1.length}, Tier 2: ${computedWinners.tier2.length}, Tier 3: ${computedWinners.tier3.length}.`);
     }
-    
-    // Update state and Firestore with winners
+
+    // Update state and Firestore
+    console.log("DrawPageAdvanced: Setting winners data.");
     setWinnersData(computedWinners);
+    console.log("DrawPageAdvanced: Updating winners to Firestore 'winnerOfTheWeek' collection.");
     await updateWinnersOfTheWeek(computedWinners);
-    console.log('Debug: Winners updated in Firestore.');
-    
+    console.log("DrawPageAdvanced: Winners data updated in Firestore.");
+
     setShowWinnersSubpage(true);
+    console.log("DrawPageAdvanced: Displaying winners subpage.");
     await clearRafflePool();
+    console.log("DrawPageAdvanced: Raffle pool cleared after winner computation.");
   };
 
   // Resetting the raffle pool
   const clearRafflePool = async () => {
+    console.log("DrawPageAdvanced: Attempting to clear raffle pool collection.");
     try {
-      console.log('Debug: Clearing raffle pool...');
       const poolRef = collection(db, 'raffle pool');
       const snapshot = await getDocs(poolRef);
       const batch = writeBatch(db);
+      console.log("DrawPageAdvanced: Initializing batch delete for raffle pool.");
       snapshot.forEach((docSnap) => {
         batch.delete(docSnap.ref);
+        console.log(`DrawPageAdvanced: Deleting document from raffle pool: ${docSnap.id}.`);
       });
       await batch.commit();
-      console.log('Debug: Raffle pool cleared successfully.');
+      console.log('DrawPageAdvanced: Raffle pool cleared successfully.');
     } catch (error) {
-      console.error('Debug: Failed to clear raffle pool:', error);
+      console.error('DrawPageAdvanced: Error clearing raffle pool:', error);
+      Alert.alert('Error', 'Failed to clear raffle pool.');
     }
   };
 
   // Modified live draw function: start progress bar animation over 5 seconds
   const startLiveDraw = async () => {
-    console.log('Debug: Starting live draw...');
+    console.log("DrawPageAdvanced: Starting live draw process.");
     setIsLive(true);
+    console.log("DrawPageAdvanced: Setting isLive to true.");
 
-    // Reset poolTickets and user entries
+    // Reset poolTickets and user entries in Firestore
     try {
       await updateDoc(doc(db, 'draw', 'current'), { poolTickets: 0 });
-      console.log('Debug: Pool tickets reset to 0.');
+      console.log('DrawPageAdvanced: Pool tickets reset to 0.');
     } catch (err) {
-      console.error('Debug: Error resetting pool:', err);
+      console.error('DrawPageAdvanced: Error resetting pool:', err);
     }
     await resetAllEntries();
-    // Removed vibration (sound/haptic effect) as per instructions
+    console.log('DrawPageAdvanced: All user entries reset to 0.');
+    // Removed vibration/haptic feedback as per instructions
 
     // Start the progress bar animation phase
     setCurrentPhase('progressBar');
     progressAnim.setValue(0);
+    console.log("DrawPageAdvanced: Starting progress bar animation.");
     Animated.timing(progressAnim, {
       toValue: 1,
       duration: 5000,
       easing: Easing.linear,
       useNativeDriver: false,
     }).start(() => {
-      console.log('Debug: Progress bar animation complete.');
+      console.log('DrawPageAdvanced: Progress bar animation complete. Transitioning to winner calculation.');
       transitionToWinners();
     });
   };
 
-  // =======================================
+  // =====================================
   // NAVIGATION HANDLERS
-  // =======================================
+  // =====================================
   const handleBackToRaffle = () => {
-    console.log('Debug: Resetting to raffle page...');
+    console.log("DrawPageAdvanced: Navigating back to raffle page.");
     setIsLive(false);
+    console.log("DrawPageAdvanced: Setting isLive to false.");
     setTimeLeft(getNextFriday6PMUTC());
+    console.log("DrawPageAdvanced: Resetting timer to next Friday.");
     setWinner(null);
+    console.log("DrawPageAdvanced: Resetting winner data.");
     setCurrentPhase('initial');
+    console.log("DrawPageAdvanced: Setting current phase to 'initial'.");
     setShowWinnersSubpage(false);
+    console.log("DrawPageAdvanced: Hiding winners subpage.");
   };
 
   const handleSeeFullWinnerList = () => {
-    console.log('Debug: Viewing full winner list...');
+    console.log("DrawPageAdvanced: Attempting to view full winner list.");
     Alert.alert('Winners', 'This would navigate to the full winner list.');
   };
 
-  // =======================================
+  // =====================================
   // TIMER CONTROL HANDLERS
-  // =======================================
+  // =====================================
   const toggleTimerPause = () => {
     setTimerPaused((prev) => {
       const newVal = !prev;
-      console.log('Debug:', newVal ? 'Timer paused.' : 'Timer resumed.');
+      console.log(`DrawPageAdvanced: Timer paused: ${newVal ? 'true' : 'false'}.`);
       return newVal;
     });
   };
 
   const skipCountdown = () => {
-    console.log('Debug: Skipping countdown, starting live draw immediately.');
+    console.log("DrawPageAdvanced: Skipping countdown. Initiating live draw immediately.");
     setTimeLeft(0);
     setTimerPaused(false);
     startLiveDraw();
   };
 
-  // =======================================
+  // =====================================
   // HELPER: Format Time (mm:ss)
-  // =======================================
+  // =====================================
   const formatTime = (ms) => {
     const totalSeconds = Math.floor(ms / 1000);
     const days = Math.floor(totalSeconds / 86400);
     const hours = Math.floor((totalSeconds % 86400) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-  
-    return `${days}d ${hours.toString().padStart(2, '0')}h:${minutes
-      .toString()
-      .padStart(2, '0')}m:${seconds.toString().padStart(2, '0')}s`;
+
+    return `${days}d ${hours.toString().padStart(2, '0')}h:${minutes.toString().padStart(2, '0')}m:${seconds.toString().padStart(2, '0')}s`;
   };
 
   const formatNumber = (value) => Math.floor(value);
 
-  // =======================================
+  // =====================================
   // RENDER COMPONENT
-  // =======================================
+  // =====================================
   // If winners subpage is active, render it with a new background image and tiered winners
   if (showWinnersSubpage && winnersData) {
+    console.log("DrawPageAdvanced: Rendering winners subpage.");
     return (
       <ImageBackground
         source={require('../../assets/images/drawingprocess.png')}
@@ -724,28 +878,31 @@ const DrawPageAdvanced = () => {
       >
         <ScrollView contentContainerStyle={styles.winnersContainer}>
           <Text style={styles.winnersHeader}>Winners</Text>
-          
+
           <Text style={styles.tierHeader}>Tier 1 Winners - Grand Prize</Text>
           <View style={styles.winnersRow}>
             {winnersData.tier1.map((winner, idx) => (
               <WinnerCard key={idx} winner={winner} prize="Grand Prize" />
             ))}
+            {winnersData.tier1.length === 0 && <Text style={styles.noWinnersText}>No Tier 1 winners this round.</Text>}
           </View>
-          
+
           <Text style={styles.tierHeader}>Tier 2 Winners - Runner-Up Prize</Text>
           <View style={styles.winnersRow}>
             {winnersData.tier2.map((winner, idx) => (
               <WinnerCard key={idx} winner={winner} prize="Runner-Up Prize" />
             ))}
+            {winnersData.tier2.length === 0 && <Text style={styles.noWinnersText}>No Tier 2 winners this round.</Text>}
           </View>
-          
+
           <Text style={styles.tierHeader}>Tier 3 Winners - Consolation Prize</Text>
           <View style={styles.winnersRow}>
             {winnersData.tier3.map((winner, idx) => (
               <WinnerCard key={idx} winner={winner} prize="Consolation Prize" />
             ))}
+            {winnersData.tier3.length === 0 && <Text style={styles.noWinnersText}>No Tier 3 winners this round.</Text>}
           </View>
-          
+
           <TouchableOpacity style={styles.postDrawButton} onPress={handleBackToRaffle}>
             <Text style={styles.buttonText}>Back to Raffle Page</Text>
           </TouchableOpacity>
@@ -755,17 +912,18 @@ const DrawPageAdvanced = () => {
   }
 
   // Main Render: Pre-draw and Live Draw UI
+  console.log("DrawPageAdvanced: Rendering main pre-draw/live draw UI.");
   return (
     <ImageBackground
       source={
         isLive
-          ? require('../../assets/images/drawingprocess.png')   // special image during draw
+          ? require('../../assets/images/drawingprocess.png') // special image during draw
           : require('../../assets/images/drawbk.png') // default pre-draw image
       }
       style={{ flex: 1 }}
       resizeMode="cover"
     >
-      {winner && winner.vip && (
+      {winner && isVip && (
         <Animated.View style={[styles.vipFlash, { opacity: flashAnim }]} />
       )}
 
@@ -829,26 +987,26 @@ const DrawPageAdvanced = () => {
             <Text style={styles.userTicketsText}>Your Tickets: {userTickets}</Text>
 
             <Animated.View
-  style={[
-    styles.buttonWrapper,
-    {
-      shadowColor: '#00ffff',
-      shadowOpacity: castGlow.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
-      shadowRadius: castGlow.interpolate({ inputRange: [0, 1], outputRange: [8, 16] }),
-      shadowOffset: { width: 0, height: 0 },
-    },
-  ]}
->
-  <TouchableOpacity onPress={handleSubmitTickets}>
-    <Image
-      source={require('../../assets/images/castTicketButton.png')}
-      style={styles.castButtonImage}
-      resizeMode="contain"
-    />
-  </TouchableOpacity>
-</Animated.View>
+              style={[
+                styles.buttonWrapper,
+                {
+                  shadowColor: '#00ffff',
+                  shadowOpacity: castGlow.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
+                  shadowRadius: castGlow.interpolate({ inputRange: [0, 1], outputRange: [8, 16] }),
+                  shadowOffset: { width: 0, height: 0 },
+                },
+              ]}
+            >
+              <TouchableOpacity onPress={handleSubmitTickets}>
+                <Image
+                  source={require('../../assets/images/castTicketButton.png')}
+                  style={styles.castButtonImage}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </Animated.View>
 
-
+            {/* Ticket Animation */}
             <Animated.View
               style={[
                 styles.ticketAnimation,
@@ -880,6 +1038,13 @@ const DrawPageAdvanced = () => {
               <TouchableOpacity style={styles.controlButton} onPress={skipCountdown}>
                 <Text style={styles.buttonText}>Skip Countdown</Text>
               </TouchableOpacity>
+            </View>
+            <Text style={styles.tierHeader}>Leaderboard (Top 5 Entries)</Text>
+            <View style={styles.winnersRow}>
+              {leaderboard.map((user, idx) => (
+                <CandidateCard key={idx} username={user.name} profileImage={user.profileImage} />
+              ))}
+              {leaderboard.length === 0 && <Text style={styles.noWinnersText}>No leaderboard data yet.</Text>}
             </View>
           </ScrollView>
         ) : (
@@ -976,7 +1141,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,
     letterSpacing: 1,
-    bottom: hp(24),
+    marginBottom: hp(24),
     textAlign: 'center',
   },
   shimmerBanner: {
@@ -1040,6 +1205,11 @@ const styles = StyleSheet.create({
     top: 200,
     marginHorizontal: 5,
     borderRadius: 8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
   },
   liveDrawContainer: {
     flex: 1,
@@ -1227,6 +1397,13 @@ const styles = StyleSheet.create({
     height: height,
     backgroundColor: 'rgba(255, 215, 0, 0.12)',
     zIndex: 1,
+  },
+  noWinnersText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 10,
+    textAlign: 'center',
+    width: '100%',
   },
 });
 
