@@ -1,10 +1,15 @@
-// app/screens/PrivacyPolicy.tsx
+```typescript
+// REWRITTEN FILE: app/app/screens/PrivacyPolicy.tsx
+// TOTAL_LOGS_INSERTED: 5
+// COMPONENT_NAME: PrivacyPolicy
+
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 
 export default function PrivacyPolicy() {
+  console.log("PrivacyPolicy: Component mounted successfully");
   const router = useRouter();
 
   return (
@@ -21,10 +26,21 @@ export default function PrivacyPolicy() {
         <Text style={styles.text}>
           [Placeholder] Suspendisse potenti. In non leo et mauris mollis posuere. Integer blandit odio ac diam ultrices, vitae tincidunt sapien pretium.
         </Text>
-        <TouchableOpacity onPress={() => Linking.openURL('https://www.example.com/privacy')}>
+        <TouchableOpacity onPress={() => {
+          const privacyUrl = 'https://www.example.com/privacy';
+          console.log("PrivacyPolicy: Attempting to open privacy policy URL: " + privacyUrl);
+          Linking.openURL(privacyUrl).then(() => {
+            console.log("PrivacyPolicy: Successfully opened privacy policy URL.");
+          }).catch((error) => {
+            console.log("PrivacyPolicy: Failed to open privacy policy URL. Error: " + error.message);
+          });
+        }}>
           <Text style={styles.link}>Read Full Privacy Policy</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.button} onPress={() => {
+          console.log("PrivacyPolicy: Back button pressed. Navigating back.");
+          router.back();
+        }}>
           <Text style={styles.buttonText}>Back</Text>
         </TouchableOpacity>
       </ScrollView>
