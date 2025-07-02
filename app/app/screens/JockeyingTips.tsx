@@ -3,7 +3,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { useNavigation } from '@react-navigation/native';
 
 export default function JockeyingTips() {
+  console.log("JockeyingTips: Component rendered."); // Component Lifecycle: Mount
   const navigation = useNavigation();
+
+  console.log("JockeyingTips: Rendering view content."); // UI: Content preparation
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -22,15 +25,15 @@ export default function JockeyingTips() {
 
       <Text style={styles.subtitle}>1. Understand the Basics</Text>
       <Text style={styles.paragraph}>
-        Jockeying isn’t about rushing to tackle the opponent. Instead, it's about containing them 
-        and reducing their attacking options. By holding your position and maintaining defensive 
+        Jockeying isn’t about rushing to tackle the opponent. Instead, it's about containing them
+        and reducing their attacking options. By holding your position and maintaining defensive
         shape, you force the attacker to make a mistake or take a less dangerous shot.
       </Text>
 
       <Text style={styles.subtitle}>2. Maintain the Right Distance</Text>
       <Text style={styles.paragraph}>
-        The key to effective jockeying is positioning. Stay close enough to apply pressure, but 
-        far enough to react if the attacker changes direction. A good rule is to maintain a 
+        The key to effective jockeying is positioning. Stay close enough to apply pressure, but
+        far enough to react if the attacker changes direction. A good rule is to maintain a
         distance where you can still lunge for a tackle if needed.
       </Text>
 
@@ -42,21 +45,25 @@ export default function JockeyingTips() {
 
       <Text style={styles.subtitle}>3. Body Positioning</Text>
       <Text style={styles.paragraph}>
-        Your body angle should guide the attacker away from goal or towards the sidelines. Keep 
-        your knees slightly bent, stay on the balls of your feet, and shift your weight to react 
+        Your body angle should guide the attacker away from goal or towards the sidelines. Keep
+        your knees slightly bent, stay on the balls of your feet, and shift your weight to react
         quickly to changes in direction.
       </Text>
 
       <Text style={styles.subtitle}>4. Combine with Teammate Support</Text>
       <Text style={styles.paragraph}>
-        Jockeying works best when done in coordination with your teammates. While you delay the 
-        attacker, your teammates can recover their positions, close passing lanes, or prepare to 
+        Jockeying works best when done in coordination with your teammates. While you delay the
+        attacker, your teammates can recover their positions, close passing lanes, or prepare to
         double-team the attacker if needed.
       </Text>
 
       {/* Back Button */}
-      <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
-        <Text style={styles.buttonText}>← Back</Text>
+      <TouchableOpacity style={styles.button} onPress={() => {
+        console.log("JockeyingTips: Back button pressed."); // User Interaction: Button press
+        navigation.goBack();
+        console.log("JockeyingTips: Navigation to previous screen initiated."); // Navigation: Action
+      }}>
+        <Text style={styles.buttonText}>◀ Back</Text>
       </TouchableOpacity>
     </ScrollView>
   );
