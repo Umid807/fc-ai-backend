@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,13 +21,18 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
+  console.log("FormationsScreen: LayoutAnimation enabled experimentally for Android.");
 }
 
 export default function FormationsPage() {
+  console.log("FormationsScreen: Component rendered.");
   const { t } = useTranslation();
   const [expandedIndex, setExpandedIndex] = useState(null);
+  console.log("FormationsScreen: Initializing expandedIndex state to: " + expandedIndex);
   const scrollViewRef = useRef(null);
+  console.log("FormationsScreen: Initializing scrollViewRef.");
   const scrollY = useRef(new Animated.Value(0)).current;
+  console.log("FormationsScreen: Initializing scrollY Animated.Value to 0.");
 
   // Re-ordered so that all 3- formations come first, then 4-, then 5-.
   const formationsData = [
@@ -397,16 +402,39 @@ export default function FormationsPage() {
       thumbnail: require('../../assets/images/523.png'),
     },
   ];
+  console.log("FormationsScreen: Formations data array initialized with " + formationsData.length + " formations.");
+
+  // UseEffect for component mount and unmount
+  useEffect(() => {
+    console.log("FormationsScreen: Component mounted successfully.");
+    return () => {
+      console.log("FormationsScreen: Component unmounted.");
+    };
+  }, []);
+
+  // UseEffect for expandedIndex state changes
+  useEffect(() => {
+    console.log("FormationsScreen: expandedIndex state updated to: " + expandedIndex);
+  }, [expandedIndex]);
+
 
   const toggleExpand = (index) => {
+    console.log("FormationsScreen: toggleExpand function called. Toggling index: " + index + ", current expandedIndex: " + expandedIndex);
     // Animate layout changes
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    console.log("FormationsScreen: LayoutAnimation configured with easeInEaseOut preset.");
     setExpandedIndex(expandedIndex === index ? null : index);
+    console.log("FormationsScreen: expandedIndex state set. New value will be: " + (expandedIndex === index ? "null (collapsed)" : index + " (expanded)"));
   };
 
   const handleScrollToTop = () => {
+    console.log("FormationsScreen: handleScrollToTop function called.");
     if (scrollViewRef.current) {
+      console.log("FormationsScreen: ScrollView ref available. Initiating scroll to top.");
       scrollViewRef.current.scrollTo({ y: 0, animated: true });
+      console.log("FormationsScreen: Scroll to top animated successfully.");
+    } else {
+      console.log("FormationsScreen: ScrollView ref not available, unable to scroll to top.");
     }
   };
 
@@ -419,10 +447,11 @@ export default function FormationsPage() {
         ref={scrollViewRef}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
+          { useNativeDriver: false } // Changed to false as true causes an error with interpolation on web.
         )}
         scrollEventThrottle={16}
       >
+        {console.log("FormationsScreen: ScrollView rendered and listening for scroll events.")}
         {formationsData.map((formation, index) => (
           <ImageBackground
             key={index}
@@ -430,10 +459,12 @@ export default function FormationsPage() {
             style={styles.formationContainer}
             imageStyle={{ borderRadius: 10 }}
           >
+            {console.log("FormationsScreen: Rendering formation card for: " + formation.name + " (Index: " + index + ").")}
             <TouchableOpacity
               onPress={() => toggleExpand(index)}
               style={styles.formationHeader}
             >
+              {console.log("FormationsScreen: TouchableOpacity for formation header rendered for " + formation.name + ".")}
               <Image
                 source={formation.thumbnail}
                 style={styles.thumbnail}
@@ -441,9 +472,15 @@ export default function FormationsPage() {
               />
               <Text style={styles.formationName}>{formation.name}</Text>
               {expandedIndex === index ? (
-                <ChevronUp size={20} color="#fff" />
+                <>
+                  {console.log("FormationsScreen: Showing ChevronUp for expanded formation: " + formation.name)}
+                  <ChevronUp size={20} color="#fff" />
+                </>
               ) : (
-                <ChevronDown size={20} color="#fff" />
+                <>
+                  {console.log("FormationsScreen: Showing ChevronDown for collapsed formation: " + formation.name)}
+                  <ChevronDown size={20} color="#fff" />
+                </>
               )}
             </TouchableOpacity>
 
@@ -453,6 +490,7 @@ export default function FormationsPage() {
                 style={styles.formationDetails}
                 imageStyle={{ borderRadius: 5 }}
               >
+                {console.log("FormationsScreen: Formation details section is visible for: " + formation.name)}
                 <Text style={styles.description}>
                   {formation.description}
                 </Text>
@@ -462,16 +500,19 @@ export default function FormationsPage() {
                     - {pro}
                   </Text>
                 ))}
+                {console.log("FormationsScreen: Pros listed for " + formation.name + ". Count: " + formation.pros.length)}
                 <Text style={styles.sectionTitle}>{t('formationsScreen.consLabel')}</Text>
                 {formation.cons.map((con, i) => (
                   <Text key={i} style={styles.listItem}>
                     - {con}
                   </Text>
                 ))}
+                {console.log("FormationsScreen: Cons listed for " + formation.name + ". Count: " + formation.cons.length)}
                 <Text style={styles.sectionTitle}>{t('formationsScreen.recommendedForLabel')}</Text>
                 <Text style={styles.recommended}>
                   {formation.recommendedFor}
                 </Text>
+                {console.log("FormationsScreen: Recommended for section displayed for " + formation.name)}
               </ImageBackground>
             )}
           </ImageBackground>
@@ -482,17 +523,19 @@ export default function FormationsPage() {
           styles.backToTopContainer,
           {
             opacity: scrollY.interpolate({
-              inputRange: [100, 200],
+              inputRange: [100, 200], // Adjust these values based on when you want the button to appear
               outputRange: [0, 1],
               extrapolate: 'clamp',
             }),
           },
         ]}
       >
+        {console.log("FormationsScreen: Back to Top button container rendered. Opacity interpolated based on scrollY.")}
         <TouchableOpacity
           onPress={handleScrollToTop}
           style={styles.backToTopButton}
         >
+          {console.log("FormationsScreen: Back to Top button TouchableOpacity rendered.")}
           <Text style={styles.backToTopText}>{t('formationsScreen.backToTop')}</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -546,7 +589,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#FFD700', // Gold color for titles
     marginTop: 10,
   },
   listItem: {
@@ -564,7 +607,7 @@ const styles = StyleSheet.create({
     right: 20,
   },
   backToTopButton: {
-    backgroundColor: '#00BFFF',
+    backgroundColor: '#00BFFF', // Deep sky blue
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 20,
@@ -574,3 +617,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+console.log("FormationsScreen: StyleSheet created successfully.");
