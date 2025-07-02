@@ -21,18 +21,18 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
-  console.log("FormationsScreen: LayoutAnimation enabled experimentally for Android.");
+  console.log("FormationsScreen: LayoutAnimation enabled experimentally for Android."); // Log 1: Conditional logic/platform specific setup
 }
 
 export default function FormationsPage() {
-  console.log("FormationsScreen: Component rendered.");
+  console.log("FormationsScreen: Component FormationsPage rendered."); // Log 2: Component mount/render
   const { t } = useTranslation();
-  const [expandedIndex, setExpandedIndex] = useState(null);
-  console.log("FormationsScreen: Initializing expandedIndex state to: " + expandedIndex);
-  const scrollViewRef = useRef(null);
-  console.log("FormationsScreen: Initializing scrollViewRef.");
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  console.log("FormationsScreen: Initializing expandedIndex state to: " + expandedIndex); // Log 3: State initialization
+  const scrollViewRef = useRef<ScrollView>(null);
+  console.log("FormationsScreen: Initializing scrollViewRef to null."); // Log 4: Ref initialization
   const scrollY = useRef(new Animated.Value(0)).current;
-  console.log("FormationsScreen: Initializing scrollY Animated.Value to 0.");
+  console.log("FormationsScreen: Initializing scrollY Animated.Value to 0."); // Log 5: Animated Value initialization
 
   // Re-ordered so that all 3- formations come first, then 4-, then 5-.
   const formationsData = [
@@ -402,39 +402,39 @@ export default function FormationsPage() {
       thumbnail: require('../../assets/images/523.png'),
     },
   ];
-  console.log("FormationsScreen: Formations data array initialized with " + formationsData.length + " formations.");
+  console.log("FormationsScreen: Formations data array initialized with " + formationsData.length + " formations."); // Log 6: Data operation (initialization)
 
   // UseEffect for component mount and unmount
   useEffect(() => {
-    console.log("FormationsScreen: Component mounted successfully.");
+    console.log("FormationsScreen: Component mounted successfully."); // Log 7: Component lifecycle (mount)
     return () => {
-      console.log("FormationsScreen: Component unmounted.");
+      console.log("FormationsScreen: Component unmounted."); // Log 8: Component lifecycle (unmount)
     };
   }, []);
 
   // UseEffect for expandedIndex state changes
   useEffect(() => {
-    console.log("FormationsScreen: expandedIndex state updated to: " + expandedIndex);
+    console.log("FormationsScreen: expandedIndex state updated to: " + expandedIndex); // Log 9: State change
   }, [expandedIndex]);
 
 
-  const toggleExpand = (index) => {
-    console.log("FormationsScreen: toggleExpand function called. Toggling index: " + index + ", current expandedIndex: " + expandedIndex);
+  const toggleExpand = (index: number) => {
+    console.log("FormationsScreen: toggleExpand function called for index: " + index + ", current expandedIndex: " + expandedIndex); // Log 10: User interaction/function call
     // Animate layout changes
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    console.log("FormationsScreen: LayoutAnimation configured with easeInEaseOut preset.");
+    console.log("FormationsScreen: LayoutAnimation configured with easeInEaseOut preset."); // Log 11: UI operation
     setExpandedIndex(expandedIndex === index ? null : index);
-    console.log("FormationsScreen: expandedIndex state set. New value will be: " + (expandedIndex === index ? "null (collapsed)" : index + " (expanded)"));
+    console.log("FormationsScreen: expandedIndex state set. New value will be: " + (expandedIndex === index ? "null (collapsed)" : index + " (expanded)")); // Log 12: State change
   };
 
   const handleScrollToTop = () => {
-    console.log("FormationsScreen: handleScrollToTop function called.");
+    console.log("FormationsScreen: handleScrollToTop function called."); // Log 13: User interaction/function call
     if (scrollViewRef.current) {
-      console.log("FormationsScreen: ScrollView ref available. Initiating scroll to top.");
+      console.log("FormationsScreen: ScrollView ref available. Initiating scroll to top."); // Log 14: Conditional logic
       scrollViewRef.current.scrollTo({ y: 0, animated: true });
-      console.log("FormationsScreen: Scroll to top animated successfully.");
+      console.log("FormationsScreen: Scroll to top animated successfully."); // Log 15: UI operation
     } else {
-      console.log("FormationsScreen: ScrollView ref not available, unable to scroll to top.");
+      console.log("FormationsScreen: ScrollView ref not available, unable to scroll to top."); // Log 16: Error scenario/conditional logic
     }
   };
 
@@ -443,6 +443,7 @@ export default function FormationsPage() {
       source={require('../../assets/images/Article bk.png')} // Page background
       style={styles.pageBackground}
     >
+      {console.log("FormationsScreen: Page background ImageBackground rendered.")} {/* Log 17: UI rendering */}
       <ScrollView
         ref={scrollViewRef}
         onScroll={Animated.event(
@@ -451,7 +452,7 @@ export default function FormationsPage() {
         )}
         scrollEventThrottle={16}
       >
-        {console.log("FormationsScreen: ScrollView rendered and listening for scroll events.")}
+        {console.log("FormationsScreen: ScrollView rendered and listening for scroll events. Scroll event throttle: 16ms")} {/* Log 18: UI rendering/Event setup */}
         {formationsData.map((formation, index) => (
           <ImageBackground
             key={index}
@@ -459,26 +460,31 @@ export default function FormationsPage() {
             style={styles.formationContainer}
             imageStyle={{ borderRadius: 10 }}
           >
-            {console.log("FormationsScreen: Rendering formation card for: " + formation.name + " (Index: " + index + ").")}
+            {console.log(`FormationsScreen: Rendering formation card for: ${formation.name} (Index: ${index}).`)} {/* Log 19: Conditional rendering (map loop item) */}
             <TouchableOpacity
-              onPress={() => toggleExpand(index)}
+              onPress={() => {
+                console.log(`FormationsScreen: Formation header pressed for ${formation.name} (Index: ${index}).`); // Log 20: User interaction (button press)
+                toggleExpand(index);
+              }}
               style={styles.formationHeader}
             >
-              {console.log("FormationsScreen: TouchableOpacity for formation header rendered for " + formation.name + ".")}
+              {console.log(`FormationsScreen: TouchableOpacity for formation header rendered for ${formation.name}.`)} {/* Log 21: UI rendering */}
               <Image
                 source={formation.thumbnail}
                 style={styles.thumbnail}
                 resizeMode="contain"
               />
+              {console.log(`FormationsScreen: Thumbnail image rendered for ${formation.name}.`)} {/* Log 22: UI rendering */}
               <Text style={styles.formationName}>{formation.name}</Text>
+              {console.log(`FormationsScreen: Formation name text rendered: ${formation.name}`)} {/* Log 23: UI rendering */}
               {expandedIndex === index ? (
                 <>
-                  {console.log("FormationsScreen: Showing ChevronUp for expanded formation: " + formation.name)}
+                  {console.log(`FormationsScreen: Showing ChevronUp icon for expanded formation: ${formation.name}`)} {/* Log 24: Conditional rendering */}
                   <ChevronUp size={20} color="#fff" />
                 </>
               ) : (
                 <>
-                  {console.log("FormationsScreen: Showing ChevronDown for collapsed formation: " + formation.name)}
+                  {console.log(`FormationsScreen: Showing ChevronDown icon for collapsed formation: ${formation.name}`)} {/* Log 25: Conditional rendering */}
                   <ChevronDown size={20} color="#fff" />
                 </>
               )}
@@ -490,29 +496,33 @@ export default function FormationsPage() {
                 style={styles.formationDetails}
                 imageStyle={{ borderRadius: 5 }}
               >
-                {console.log("FormationsScreen: Formation details section is visible for: " + formation.name)}
+                {console.log(`FormationsScreen: Formation details section is visible for: ${formation.name}`)} {/* Log 26: Conditional rendering */}
                 <Text style={styles.description}>
                   {formation.description}
                 </Text>
+                {console.log(`FormationsScreen: Description text rendered for ${formation.name}.`)} {/* Log 27: UI rendering */}
                 <Text style={styles.sectionTitle}>{t('formationsScreen.prosLabel')}</Text>
+                {console.log(`FormationsScreen: Pros section title rendered for ${formation.name}.`)} {/* Log 28: UI rendering */}
                 {formation.pros.map((pro, i) => (
                   <Text key={i} style={styles.listItem}>
                     - {pro}
                   </Text>
                 ))}
-                {console.log("FormationsScreen: Pros listed for " + formation.name + ". Count: " + formation.pros.length)}
+                {console.log(`FormationsScreen: Pros list items rendered for ${formation.name}. Count: ${formation.pros.length}`)} {/* Log 29: UI rendering (map loop completion) */}
                 <Text style={styles.sectionTitle}>{t('formationsScreen.consLabel')}</Text>
+                {console.log(`FormationsScreen: Cons section title rendered for ${formation.name}.`)} {/* Log 30: UI rendering */}
                 {formation.cons.map((con, i) => (
                   <Text key={i} style={styles.listItem}>
                     - {con}
                   </Text>
                 ))}
-                {console.log("FormationsScreen: Cons listed for " + formation.name + ". Count: " + formation.cons.length)}
+                {console.log(`FormationsScreen: Cons list items rendered for ${formation.name}. Count: ${formation.cons.length}`)} {/* Log 31: UI rendering (map loop completion) */}
                 <Text style={styles.sectionTitle}>{t('formationsScreen.recommendedForLabel')}</Text>
+                {console.log(`FormationsScreen: Recommended For section title rendered for ${formation.name}.`)} {/* Log 32: UI rendering */}
                 <Text style={styles.recommended}>
                   {formation.recommendedFor}
                 </Text>
-                {console.log("FormationsScreen: Recommended for section displayed for " + formation.name)}
+                {console.log(`FormationsScreen: Recommended for text displayed for ${formation.name}.`)} {/* Log 33: UI rendering */}
               </ImageBackground>
             )}
           </ImageBackground>
@@ -530,13 +540,15 @@ export default function FormationsPage() {
           },
         ]}
       >
-        {console.log("FormationsScreen: Back to Top button container rendered. Opacity interpolated based on scrollY.")}
+        {console.log("FormationsScreen: Back to Top button container Animated.View rendered. Opacity animated based on scrollY.")} {/* Log 34: UI rendering/Animation */}
         <TouchableOpacity
           onPress={handleScrollToTop}
           style={styles.backToTopButton}
         >
-          {console.log("FormationsScreen: Back to Top button TouchableOpacity rendered.")}
-          <Text style={styles.backToTopText}>{t('formationsScreen.backToTop')}</Text>
+          {console.log("FormationsScreen: Back to Top button TouchableOpacity rendered. OnPress handler attached.")} {/* Log 35: UI rendering/User interaction */}
+          <Text style={styles.backToTopText}>
+            {t('formationsScreen.backToTop')}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </ImageBackground>
@@ -617,4 +629,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-console.log("FormationsScreen: StyleSheet created successfully.");
+console.log("FormationsScreen: StyleSheet created successfully."); // Log 36: Data operation (StyleSheet creation)
