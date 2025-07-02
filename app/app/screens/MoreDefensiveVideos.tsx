@@ -26,22 +26,41 @@ const videos = [
 ];
 
 export default function MoreDefensiveVideos() {
+  console.log("MoreDefensiveVideos: Component mounted successfully.");
+
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Top Defensive Videos You Can’t Miss</Text>
+      <Text style={styles.header}>Top Defensive Videos You Can't Miss</Text>
+      {console.log("MoreDefensiveVideos: Displaying video list.")}
       {videos.map(video => (
         <TouchableOpacity
           key={video.id}
           style={styles.videoContainer}
-          onPress={() => Linking.openURL(video.url)}
+          onPress={async () => {
+            console.log("MoreDefensiveVideos: Video item pressed. Video ID: " + video.id + ", Title: " + video.title);
+            try {
+              console.log("MoreDefensiveVideos: Attempting to open URL: " + video.url);
+              const supported = await Linking.canOpenURL(video.url);
+              if (supported) {
+                await Linking.openURL(video.url);
+                console.log("MoreDefensiveVideos: Successfully opened URL for video: " + video.title);
+              } else {
+                console.log("MoreDefensiveVideos: URL not supported or cannot be opened: " + video.url);
+              }
+            } catch (error) {
+              console.log("MoreDefensiveVideos: Failed to open URL. Error: " + error.message);
+            }
+          }}
         >
           <Image source={video.thumbnail} style={styles.thumbnail} />
           <View style={styles.textContainer}>
             <Text style={styles.title}>{video.title}</Text>
             <Text style={styles.description}>{video.description}</Text>
           </View>
+          {console.log("MoreDefensiveVideos: Video item rendered. ID: " + video.id + ", Title: " + video.title)}
         </TouchableOpacity>
       ))}
+      {console.log("MoreDefensiveVideos: All video items processed and displayed.")}
     </ScrollView>
   );
 }
