@@ -66,65 +66,90 @@ const VIP_BONUS = 5000;
 
 // === UTILITY FUNCTIONS ===
 const getNextFriday8pmEST = (): number => {
+  console.log("Raffle: getNextFriday8pmEST called."); // LOG_INSERTION_POINT
   const now = new Date();
   const estOffset = -5; // EST is UTC-5
   const currentEST = new Date(now.getTime() + (estOffset * 60 * 60 * 1000));
-  
+  // LOG_INSERTION_POINT
+  console.log(`Raffle: Current EST time: ${currentEST.toLocaleString()}`);
+
   const dayOfWeek = currentEST.getDay();
   const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7;
-  
+
   const nextFriday = new Date(currentEST);
   nextFriday.setDate(currentEST.getDate() + daysUntilFriday);
   nextFriday.setHours(20, 0, 0, 0); // 8 PM
-  
+
+  // If 8 PM EST on Friday has already passed, set for next Friday
+  if (currentEST.getTime() > nextFriday.getTime()) {
+    nextFriday.setDate(nextFriday.getDate() + 7);
+    console.log("Raffle: 8 PM EST has passed, setting for next Friday."); // LOG_INSERTION_POINT
+  }
+
+  console.log(`Raffle: Next draw time calculated: ${nextFriday.toLocaleString()}`); // LOG_INSERTION_POINT
   return nextFriday.getTime();
 };
 
 const formatTimeLeft = (timeLeft: number) => {
+  console.log(`Raffle: formatTimeLeft called with timeLeft: ${timeLeft}`); // LOG_INSERTION_POINT
   if (timeLeft <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  
+
   const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
   const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-  
+  // LOG_INSERTION_POINT
+  console.log(`Raffle: Formatted time - D:${days} H:${hours} M:${minutes} S:${seconds}`);
   return { days, hours, minutes, seconds };
 };
 
 // === FIREBASE HELPER FUNCTIONS ===
 const useFirebaseUser = () => {
+  console.log("useFirebaseUser: Hook initialized."); // LOG_INSERTION_POINT
   const user = auth.currentUser;
-  
+
   const getUserDocRef = useCallback(() => {
+    console.log("useFirebaseUser: getUserDocRef called."); // LOG_INSERTION_POINT
     if (!user) {
-      console.error('User not authenticated');
+      console.error('useFirebaseUser: User not authenticated.'); // LOG_INSERTION_POINT
       return null;
     }
     return doc(db, 'users', user.uid);
   }, [user]);
 
   const updateUserData = useCallback(async (updates: Partial<UserData>) => {
+    console.log("useFirebaseUser: updateUserData called with updates:", updates); // LOG_INSERTION_POINT
     const userDocRef = getUserDocRef();
-    if (!userDocRef) return false;
-    
+    if (!userDocRef) {
+      console.log("useFirebaseUser: updateUserData failed, userDocRef is null."); // LOG_INSERTION_POINT
+      return false;
+    }
+
     try {
       await updateDoc(userDocRef, updates);
+      console.log("useFirebaseUser: User data updated successfully."); // LOG_INSERTION_POINT
       return true;
     } catch (error) {
-      console.error('Error updating user data:', error);
+      console.error('useFirebaseUser: Error updating user data:', error); // LOG_INSERTION_POINT
       return false;
     }
   }, [getUserDocRef]);
 
   const fetchUserData = useCallback(async (): Promise<UserData | null> => {
+    console.log("useFirebaseUser: fetchUserData called."); // LOG_INSERTION_POINT
     const userDocRef = getUserDocRef();
-    if (!userDocRef) return null;
-    
+    if (!userDocRef) {
+      console.log("useFirebaseUser: fetchUserData failed, userDocRef is null."); // LOG_INSERTION_POINT
+      return null;
+    }
+
     try {
       const docSnap = await getDoc(userDocRef);
-      return docSnap.exists() ? docSnap.data() as UserData : null;
+      const data = docSnap.exists() ? docSnap.data() as UserData : null;
+      console.log("useFirebaseUser: User data fetched successfully:", data); // LOG_INSERTION_POINT
+      return data;
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('useFirebaseUser: Error fetching user data:', error); // LOG_INSERTION_POINT
       return null;
     }
   }, [getUserDocRef]);
@@ -143,12 +168,17 @@ const NeonCountdown: React.FC<{
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    console.log("NeonCountdown: Component mounted. Setting up countdown interval."); // LOG_INSERTION_POINT
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
+      console.log("NeonCountdown: Existing interval cleared."); // LOG_INSERTION_POINT
     }
 
     intervalRef.current = setInterval(() => {
-      setTimeLeft(targetTime - Date.now());
+      const newTimeLeft = targetTime - Date.now();
+      setTimeLeft(newTimeLeft);
+      // LOG_INSERTION_POINT
+      console.log(`NeonCountdown: TimeLeft updated to: ${newTimeLeft}`);
     }, 1000);
 
     // Much more subtle glow animation
@@ -170,8 +200,10 @@ const NeonCountdown: React.FC<{
     );
 
     glowAnimation.start();
+    console.log("NeonCountdown: Glow animation started."); // LOG_INSERTION_POINT
 
     return () => {
+      console.log("NeonCountdown: Component unmounting. Clearing interval and stopping animation."); // LOG_INSERTION_POINT
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -179,18 +211,20 @@ const NeonCountdown: React.FC<{
     };
   }, [targetTime, glowAnim]);
 
-  const { days, hours, minutes, seconds } = useMemo(() => 
-    formatTimeLeft(timeLeft), [timeLeft]
+  const { days, hours, minutes, seconds } = useMemo(
+    () => formatTimeLeft(timeLeft),
+    [timeLeft]
   );
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
       <View style={styles.neonContainer}>
         {/* Animated glow background */}
-        <Animated.View style={[
-          styles.neonGlow,
-          { opacity: glowAnim }
-        ]} />
+        <Animated.View
+          style={[
+            styles.neonGlow,
+            { opacity: glowAnim }
+          ]} />
         
         <LinearGradient
           colors={['rgba(0, 255, 255, 0.3)', 'rgba(147, 0, 211, 0.3)', 'rgba(255, 20, 147, 0.3)']}
@@ -247,9 +281,10 @@ const WinnersSection: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
+  const shineAnim = useRef(new Animated.Value(0)).current; // For shine effect
 
   useEffect(() => {
+    console.log("WinnersSection: Component mounted. Setting up Firestore listener for winners."); // LOG_INSERTION_POINT
     const winnersCollectionRef = collection(db, 'winnerOfTheWeek');
     
     const unsubscribe = onSnapshot(
@@ -263,28 +298,54 @@ const WinnersSection: React.FC = () => {
           
           setWinners(winnersData);
           setError(null);
+          console.log("WinnersSection: Winners data fetched successfully:", winnersData); // LOG_INSERTION_POINT
           
           Animated.timing(fadeAnim, {
             toValue: 1,
             duration: 800,
             useNativeDriver: true,
-          }).start();
+          }).start(() => {
+            console.log("WinnersSection: Fade in animation complete."); // LOG_INSERTION_POINT
+            // Start shine animation after fade in
+            Animated.loop(
+              Animated.sequence([
+                Animated.timing(shineAnim, {
+                  toValue: 1,
+                  duration: 1500, // Duration for one pass
+                  easing: Easing.linear,
+                  useNativeDriver: true,
+                }),
+                Animated.timing(shineAnim, {
+                  toValue: 0,
+                  duration: 0, // Reset instantly
+                  useNativeDriver: true,
+                }),
+              ]),
+              { iterations: -1 } // Loop indefinitely
+            ).start();
+            console.log("WinnersSection: Shine animation started."); // LOG_INSERTION_POINT
+          });
+
         } catch (err) {
-          console.error('Error processing winners data:', err);
+          console.error('WinnersSection: Error processing winners data:', err); // LOG_INSERTION_POINT
           setError('Failed to load winners');
         } finally {
           setLoading(false);
+          console.log("WinnersSection: Loading state set to false."); // LOG_INSERTION_POINT
         }
       },
       (err) => {
-        console.error('Error fetching winners:', err);
+        console.error('WinnersSection: Error fetching winners:', err); // LOG_INSERTION_POINT
         setError('Failed to load winners');
         setLoading(false);
       }
     );
 
-    return () => unsubscribe();
-  }, [fadeAnim]);
+    return () => {
+      console.log("WinnersSection: Component unmounting. Unsubscribing from Firestore winners listener."); // LOG_INSERTION_POINT
+      unsubscribe();
+    };
+  }, [fadeAnim, shineAnim]);
 
   useEffect(() => {
     // Subtle floating animation
@@ -306,15 +367,16 @@ const WinnersSection: React.FC = () => {
     );
 
     scaleAnimation.start();
+    console.log("WinnersSection: Floating animation started."); // LOG_INSERTION_POINT
    
-
     return () => {
+      console.log("WinnersSection: Component unmounting. Stopping floating animation."); // LOG_INSERTION_POINT
       scaleAnimation.stop();
- 
     };
-  }, [scaleAnim, shineAnim]);
+  }, [scaleAnim]);
 
   if (loading) {
+    console.log("WinnersSection: Rendering loading state."); // LOG_INSERTION_POINT
     return (
       <LinearGradient
         colors={['#1a1a1a', '#333']}
@@ -326,6 +388,7 @@ const WinnersSection: React.FC = () => {
   }
 
   if (error) {
+    console.log("WinnersSection: Rendering error state:", error); // LOG_INSERTION_POINT
     return (
       <LinearGradient
         colors={['#1a1a1a', '#333']}
@@ -351,37 +414,37 @@ const WinnersSection: React.FC = () => {
         </View>
         
         <Animated.View style={{ 
-          transform: [{ scale: scaleAnim }],
-          opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+            opacity: fadeAnim,
         }}>
           {winners.length > 0 ? (
             winners.map((winner, index) => (
-              <Animated.View 
-                key={winner.id} 
+              <Animated.View
+                key={winner.id}
                 style={[
                   styles.championCard,
                   {
                     opacity: fadeAnim,
                     transform: [{
-                      translateY: fadeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [20, 0],
-                      })
+                        translateY: fadeAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [20, 0],
+                        })
                     }]
                   }
                 ]}
               >
                 {/* Shine effect overlay */}
                 <Animated.View style={[
-                  styles.shineOverlay,
-                  {
-                    transform: [{
-                      translateX: shineAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [-200, 200],
-                      })
-                    }]
-                  }
+                    styles.shineOverlay,
+                    {
+                        transform: [{
+                            translateX: shineAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [-200, 200], // Adjust range based on card width
+                            })
+                        }]
+                    }
                 ]} />
                 
                 <LinearGradient
@@ -392,28 +455,28 @@ const WinnersSection: React.FC = () => {
                 >
                   <View style={styles.championInner}>
                     <View style={styles.winnerImageContainer}>
-                      <Image
-                        source={{ 
-                          uri: winner.profileImage || 'https://via.placeholder.com/50' 
-                        }}
-                        style={styles.championImage}
-                      />
-                      <View style={styles.crownOverlay}>
-                        <Ionicons name="star" size={16} color="#FFD700" />
-                      </View>
+                        <Image
+                            source={{ 
+                                uri: winner.profileImage || 'https://via.placeholder.com/50' 
+                            }}
+                            style={styles.championImage}
+                        />
+                        <View style={styles.crownOverlay}>
+                            <Ionicons name="star" size={16} color="#FFD700" />
+                        </View>
                     </View>
                     
                     <View style={styles.winnerInfo}>
-                      <Text style={styles.championName}>
-                        🏆 {winner.username}
-                      </Text>
-                      <Text style={styles.prizeText}>
-                        {t('raffle.won')} {winner.prize}
-                      </Text>
+                        <Text style={styles.championName}>
+                            👑 {winner.username}
+                        </Text>
+                        <Text style={styles.prizeText}>
+                            {t('raffle.won')} {winner.prize}
+                        </Text>
                     </View>
                     
                     <View style={styles.celebrationEffects}>
-                      <Text style={styles.sparkles}>✨</Text>
+                        <Text style={styles.sparkles}>✨</Text>
                     </View>
                   </View>
                 </LinearGradient>
@@ -433,6 +496,7 @@ const WinnersSection: React.FC = () => {
 
 // === PURCHASE LOGIC HOOK ===
 const usePurchaseLogic = () => {
+  console.log("usePurchaseLogic: Hook initialized."); // LOG_INSERTION_POINT
   const { updateUserData, fetchUserData } = useFirebaseUser();
   const [purchasing, setPurchasing] = useState(false);
   const { t } = useTranslation();
@@ -445,52 +509,65 @@ const usePurchaseLogic = () => {
     setTicketsCount: (tickets: number) => void,
     onSuccess: (totalTickets: number) => void
   ) => {
-    if (purchasing) return; // Prevent double-purchases
+    console.log(`usePurchaseLogic: executePurchase called with count: ${count}, currentCoins: ${currentCoins}, currentTickets: ${currentTickets}`); // LOG_INSERTION_POINT
+    if (purchasing) {
+      console.log("usePurchaseLogic: Already purchasing, preventing double purchase."); // LOG_INSERTION_POINT
+      return; // Prevent double-purchases
+    }
     
     setPurchasing(true);
-    
+    console.log("usePurchaseLogic: Purchasing state set to true."); // LOG_INSERTION_POINT
+
     try {
       const bonusTickets = Math.floor(count / BULK_BONUS_THRESHOLD);
       const totalTicketsToAdd = count + bonusTickets;
       const totalCost = TICKET_PRICE * count;
+      console.log(`usePurchaseLogic: Calculated bonusTickets: ${bonusTickets}, totalTicketsToAdd: ${totalTicketsToAdd}, totalCost: ${totalCost}`); // LOG_INSERTION_POINT
 
       if (currentCoins < totalCost) {
         Alert.alert(
           t('raffle.insufficientCoins'),
           t('raffle.insufficientCoinsMessage')
         );
+        console.log("usePurchaseLogic: Insufficient coins, showing alert."); // LOG_INSERTION_POINT
         return;
       }
 
       const newCoinCount = currentCoins - totalCost;
       const newTicketsCount = currentTickets + totalTicketsToAdd;
+      console.log(`usePurchaseLogic: New coin count: ${newCoinCount}, new tickets count: ${newTicketsCount}`); // LOG_INSERTION_POINT
 
       // Update local state immediately for responsiveness
       setUserCoins(newCoinCount);
       setTicketsCount(newTicketsCount);
+      console.log("usePurchaseLogic: Local state updated immediately."); // LOG_INSERTION_POINT
 
       // Batch update Firebase
       const updateSuccess = await updateUserData({
         coins: newCoinCount,
         raffleTickets: newTicketsCount,
       });
+      console.log(`usePurchaseLogic: Firebase update successful: ${updateSuccess}`); // LOG_INSERTION_POINT
 
       if (updateSuccess) {
         onSuccess(totalTicketsToAdd);
+        console.log(`usePurchaseLogic: Purchase successful. Total tickets added: ${totalTicketsToAdd}`); // LOG_INSERTION_POINT
         
-        // Verify the update
+        // Verify the update by fetching fresh data
         const freshData = await fetchUserData();
         if (freshData?.coins !== undefined) {
           setUserCoins(freshData.coins);
+          console.log(`usePurchaseLogic: Verified new coins from Firestore: ${freshData.coins}`); // LOG_INSERTION_POINT
         }
         if (freshData?.raffleTickets !== undefined) {
           setTicketsCount(freshData.raffleTickets);
+          console.log(`usePurchaseLogic: Verified new tickets from Firestore: ${freshData.raffleTickets}`); // LOG_INSERTION_POINT
         }
       } else {
         throw new Error('Failed to update user data');
       }
     } catch (error) {
-      console.error('Purchase error:', error);
+      console.error('usePurchaseLogic: Purchase error:', error); // LOG_INSERTION_POINT
       Alert.alert(t('raffle.purchaseError'), t('raffle.purchaseErrorMessage'));
       
       // Revert local state on error
@@ -498,9 +575,11 @@ const usePurchaseLogic = () => {
       if (freshData) {
         setUserCoins(freshData.coins ?? currentCoins);
         setTicketsCount(freshData.raffleTickets ?? currentTickets);
+        console.log("usePurchaseLogic: Local state reverted due to error."); // LOG_INSERTION_POINT
       }
     } finally {
       setPurchasing(false);
+      console.log("usePurchaseLogic: Purchasing state set to false (finally block)."); // LOG_INSERTION_POINT
     }
   }, [purchasing, updateUserData, fetchUserData, t]);
 
@@ -525,12 +604,14 @@ const TicketPurchasePanel: React.FC<{
   toggleRulesModal,
   openTicketsModal,
 }) => {
+  console.log("TicketPurchasePanel: Component rendered."); // LOG_INSERTION_POINT
   const { t } = useTranslation();
   const [purchaseCount, setPurchaseCount] = useState(0);
   const { executePurchase, purchasing } = usePurchaseLogic();
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
 
   const handleIncrease = useCallback(() => {
+    console.log("TicketPurchasePanel: Increase button pressed."); // LOG_INSERTION_POINT
     setPurchaseCount(prev => prev + 1);
     // Button press animation
     Animated.sequence([
@@ -548,6 +629,7 @@ const TicketPurchasePanel: React.FC<{
   }, [buttonScaleAnim]);
 
   const handleDecrease = useCallback(() => {
+    console.log("TicketPurchasePanel: Decrease button pressed."); // LOG_INSERTION_POINT
     setPurchaseCount(prev => Math.max(0, prev - 1));
     // Button press animation
     Animated.sequence([
@@ -565,11 +647,17 @@ const TicketPurchasePanel: React.FC<{
   }, [buttonScaleAnim]);
 
   const handlePurchase = useCallback(() => {
-    if (purchaseCount <= 0 || purchasing) return;
+    console.log("TicketPurchasePanel: Purchase button pressed."); // LOG_INSERTION_POINT
+    if (purchaseCount <= 0 || purchasing) {
+        console.log(`TicketPurchasePanel: Purchase disabled. Count: ${purchaseCount}, Purchasing: ${purchasing}`); // LOG_INSERTION_POINT
+        return;
+    }
 
     const bonusTickets = Math.floor(purchaseCount / BULK_BONUS_THRESHOLD);
     const totalTickets = purchaseCount + bonusTickets;
     const totalCost = TICKET_PRICE * purchaseCount;
+    // LOG_INSERTION_POINT
+    console.log(`TicketPurchasePanel: Confirming purchase of ${purchaseCount} tickets for ${totalCost} coins. Bonus tickets: ${bonusTickets}, total: ${totalTickets}`);
 
     Alert.alert(
       t('raffle.purchaseConfirmTitle'),
@@ -584,6 +672,7 @@ const TicketPurchasePanel: React.FC<{
         {
           text: t('common.confirm'),
           onPress: () => {
+            console.log("TicketPurchasePanel: Purchase confirmed by user."); // LOG_INSERTION_POINT
             executePurchase(
               purchaseCount,
               userCoins,
@@ -592,7 +681,8 @@ const TicketPurchasePanel: React.FC<{
               setTicketsCount,
               onTicketPurchased
             );
-            setPurchaseCount(0);
+            setPurchaseCount(0); // Reset count after purchase
+            console.log("TicketPurchasePanel: Purchase count reset to 0."); // LOG_INSERTION_POINT
           },
         },
       ]
@@ -634,9 +724,9 @@ const TicketPurchasePanel: React.FC<{
         <View style={styles.counterRow}>
           <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
             <TouchableOpacity 
-              style={[styles.counterButton, purchasing && styles.disabledButton]} 
-              onPress={handleDecrease}
-              disabled={purchasing}
+                style={[styles.counterButton, purchasing && styles.disabledButton]} 
+                onPress={handleDecrease}
+                disabled={purchasing}
             >
               <Text style={styles.counterButtonText}>-</Text>
             </TouchableOpacity>
@@ -646,9 +736,9 @@ const TicketPurchasePanel: React.FC<{
           
           <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
             <TouchableOpacity 
-              style={[styles.counterButton, purchasing && styles.disabledButton]} 
-              onPress={handleIncrease}
-              disabled={purchasing}
+                style={[styles.counterButton, purchasing && styles.disabledButton]} 
+                onPress={handleIncrease}
+                disabled={purchasing}
             >
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
@@ -682,6 +772,7 @@ const TicketPurchasePanel: React.FC<{
 
 // === MAIN RAFFLE PAGE ===
 const RafflePage: React.FC = () => {
+  console.log("RafflePage: Component mounted."); // LOG_INSERTION_POINT
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -693,6 +784,7 @@ const RafflePage: React.FC = () => {
     'Exo2-Bold': require('../../assets/fonts/Orbitron/Orbitron-Regular.ttf'),
     'Rajdhani-Bold': require('../../assets/fonts/Orbitron/Orbitron-Regular.ttf'),
   });
+  console.log(`RafflePage: Fonts loaded status: ${fontsLoaded}`); // LOG_INSERTION_POINT
 
   // State management
   const [userCoins, setUserCoins] = useState(0);
@@ -703,7 +795,9 @@ const RafflePage: React.FC = () => {
   const [rulesVisible, setRulesVisible] = useState(false);
   const [ticketsModalVisible, setTicketsModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<any[]>([]); // Placeholder for notifications
+  // LOG_INSERTION_POINT
+  console.log(`RafflePage: Initial state - userCoins: ${userCoins}, ticketsCount: ${ticketsCount}, loading: ${loading}`);
 
   // Animation refs
   const ticketAnim = useRef(new Animated.Value(0)).current;
@@ -718,13 +812,16 @@ const RafflePage: React.FC = () => {
 
   // Load initial data
   useEffect(() => {
+    console.log("RafflePage: useEffect (initial data load) triggered."); // LOG_INSERTION_POINT
     const loadInitialData = async () => {
+      console.log("RafflePage: loadInitialData function called."); // LOG_INSERTION_POINT
       try {
         if (user) {
           const userData = await fetchUserData();
           if (userData) {
             setUserCoins(userData.coins ?? 0);
             setTicketsCount(userData.raffleTickets ?? 0);
+            console.log(`RafflePage: Initial user data loaded. Coins: ${userData.coins ?? 0}, Tickets: ${userData.raffleTickets ?? 0}`); // LOG_INSERTION_POINT
           }
         }
 
@@ -733,12 +830,13 @@ const RafflePage: React.FC = () => {
           toValue: 1,
           duration: 1000,
           useNativeDriver: true,
-        }).start();
+        }).start(() => console.log("RafflePage: Header fade in animation complete.")); // LOG_INSERTION_POINT
 
       } catch (error) {
-        console.error('Error loading initial data:', error);
+        console.error('RafflePage: Error loading initial data:', error); // LOG_INSERTION_POINT
       } finally {
         setLoading(false);
+        console.log("RafflePage: Initial data loading complete. Loading state set to false."); // LOG_INSERTION_POINT
       }
     };
 
@@ -747,7 +845,11 @@ const RafflePage: React.FC = () => {
 
   // Setup Firebase listeners
   useEffect(() => {
-    if (!user) return;
+    console.log("RafflePage: useEffect (Firebase listeners) triggered."); // LOG_INSERTION_POINT
+    if (!user) {
+      console.log("RafflePage: User not authenticated, skipping Firebase listeners setup."); // LOG_INSERTION_POINT
+      return;
+    }
 
     // User data listener
     const userDocRef = doc(db, 'users', user.uid);
@@ -758,12 +860,14 @@ const RafflePage: React.FC = () => {
           const data = docSnapshot.data();
           setUserCoins(data.coins ?? 0);
           setTicketsCount(data.raffleTickets ?? 0);
+          console.log(`RafflePage: User data updated by listener. Coins: ${data.coins ?? 0}, Tickets: ${data.raffleTickets ?? 0}`); // LOG_INSERTION_POINT
         }
       },
       (error) => {
-        console.error('Error listening to user data:', error);
+        console.error('RafflePage: Error listening to user data:', error); // LOG_INSERTION_POINT
       }
     );
+    console.log("RafflePage: Firestore user data listener set up."); // LOG_INSERTION_POINT
 
     // Raffle pool listener
     const rafflePoolRef = collection(db, 'raffle pool');
@@ -776,29 +880,36 @@ const RafflePage: React.FC = () => {
           total += data.lockedTickets || 0;
         });
         setTotalEntries(total);
+        console.log(`RafflePage: Raffle pool data updated by listener. Total entries: ${total}`); // LOG_INSERTION_POINT
 
         // Animate entries count change
         Animated.timing(entriesCountAnim, {
-          toValue: 1,
+          toValue: 1, // Trigger animation
           duration: 500,
           useNativeDriver: true,
-        }).start();
+        }).start(() => {
+            entriesCountAnim.setValue(0); // Reset for next trigger
+            console.log("RafflePage: Entries count animation triggered."); // LOG_INSERTION_POINT
+        });
       },
       (error) => {
-        console.error('Error listening to raffle pool:', error);
+        console.error('RafflePage: Error listening to raffle pool:', error); // LOG_INSERTION_POINT
       }
     );
+    console.log("RafflePage: Firestore raffle pool listener set up."); // LOG_INSERTION_POINT
 
     unsubscribeRefs.current = [unsubscribeUser, unsubscribePool];
 
     return () => {
+      console.log("RafflePage: Component unmounting. Unsubscribing from all Firestore listeners."); // LOG_INSERTION_POINT
       unsubscribeRefs.current.forEach(unsubscribe => unsubscribe());
     };
   }, [user, entriesCountAnim]);
 
-  // Cleanup
+  // Cleanup for sound
   useEffect(() => {
     return () => {
+      console.log("RafflePage: Component unmounting. Unloading sound."); // LOG_INSERTION_POINT
       if (soundRef.current) {
         soundRef.current.unloadAsync();
       }
@@ -808,16 +919,18 @@ const RafflePage: React.FC = () => {
 
   // Animation functions
   const runTicketAnimation = useCallback(() => {
+    console.log("RafflePage: runTicketAnimation called."); // LOG_INSERTION_POINT
     ticketAnim.setValue(0);
     Animated.timing(ticketAnim, {
       toValue: 1,
       duration: 800,
       easing: Easing.elastic(1.2),
       useNativeDriver: true,
-    }).start();
+    }).start(() => console.log("RafflePage: Ticket animation complete.")); // LOG_INSERTION_POINT
   }, [ticketAnim]);
 
   const runSparkleAnimation = useCallback(() => {
+    console.log("RafflePage: runSparkleAnimation called."); // LOG_INSERTION_POINT
     sparkleAnim.setValue(0);
     sparkleRotateAnim.setValue(0);
     
@@ -835,32 +948,49 @@ const RafflePage: React.FC = () => {
       duration: 1200,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
-    }).start();
+    }).start(() => console.log("RafflePage: Sparkle animation complete.")); // LOG_INSERTION_POINT
   }, [sparkleAnim, sparkleRotateAnim]);
 
   // Event handlers
   const handleTicketPurchased = useCallback(async (count: number) => {
+    console.log(`RafflePage: handleTicketPurchased called with count: ${count}`); // LOG_INSERTION_POINT
     setPurchasedTickets(count);
     setShowConfirmation(true);
     runTicketAnimation();
     runSparkleAnimation();
+
+    try {
+        const { sound } = await Audio.Sound.createAsync(
+            require('../../assets/sounds/coin.mp3'),
+            { shouldPlay: true }
+        );
+        soundRef.current = sound;
+        console.log("RafflePage: Coin sound played."); // LOG_INSERTION_POINT
+    } catch (e) {
+        console.error("RafflePage: Failed to play sound", e); // LOG_INSERTION_POINT
+    }
   }, [runTicketAnimation, runSparkleAnimation]);
 
   const navigateToDrawDetails = useCallback(() => {
+    console.log("RafflePage: Navigating to DrawDetails screen."); // LOG_INSERTION_POINT
     router.push('/screens/drawDetails');
   }, [router]);
 
   const toggleRulesModal = useCallback(() => {
+    console.log(`RafflePage: Toggling rules modal. Current state: ${rulesVisible}`); // LOG_INSERTION_POINT
     setRulesVisible(prev => !prev);
-  }, []);
+  }, [rulesVisible]);
 
   const markNotificationAsRead = useCallback(async (notifId: string) => {
+    console.log(`RafflePage: Mark notification as read called for ID: ${notifId}`); // LOG_INSERTION_POINT
     // Implement notification read functionality
+    // setNotifications(prev => prev.filter(n => n.id !== notifId));
   }, []);
 
   const nextDrawTime = useMemo(() => getNextFriday8pmEST(), []);
 
   if (!fontsLoaded || loading) {
+    console.log(`RafflePage: Rendering loading state. Fonts loaded: ${fontsLoaded}, Loading data: ${loading}`); // LOG_INSERTION_POINT
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>{t('common.loading')}</Text>
@@ -876,7 +1006,10 @@ const RafflePage: React.FC = () => {
     >
       {/* Custom Header */}
       <CustomHeader
-        navigation={{ goBack: () => router.back() }}
+        navigation={{ goBack: () => { 
+          router.back(); 
+          console.log("RafflePage: Header back button pressed."); // LOG_INSERTION_POINT
+        }}}
         route={{ name: t('raffle.championsRaffle') }}
         options={{ headerTitle: t('raffle.championsRaffle') }}
         back={true}
@@ -886,7 +1019,7 @@ const RafflePage: React.FC = () => {
         onBackPress={() => router.back()}
       />
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[
           styles.scrollContainer,
           { paddingTop: insets.top + 70 }
@@ -895,112 +1028,113 @@ const RafflePage: React.FC = () => {
       >
         {/* Hero Section with Image Background */}
         <Animated.View style={{ opacity: headerFadeAnim }}>
-<ImageBackground
-  source={require('../../assets/images/rafflehero.png')}
-  style={styles.heroContainer}
-  imageStyle={{ borderRadius: 12, resizeMode: 'cover' }}
->
-  <View style={styles.heroOverlay}>
-    {/* Title stays at top */}
-    <Animated.Text 
-      style={[
-        styles.heroTitle,
-        { 
-          fontFamily: 'Orbitron-Bold',
-          marginTop: 20,
-          transform: [{
-            scale: headerFadeAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0.8, 1],
-            })
-          }]
-        }
-      ]}
-    >
-      {t('raffle.championsRaffle')}
-    </Animated.Text>
-    
-    {/* Countdown positioned absolutely in center */}
-    <View style={styles.countdownPosition}>
-      <NeonCountdown
-        targetTime={nextDrawTime}
-        onPress={navigateToDrawDetails}
-      />
-    </View>
-
-{/* Circular How to Play button - top right */}
-<TouchableOpacity 
-  onPress={toggleRulesModal} 
-  style={styles.circularHelpButton}
-  activeOpacity={0.8}
->
-  <LinearGradient
-    colors={['#FFD700', '#FFA500', '#FF6B35']}
-    style={styles.helpButtonGradient}
-  >
-    <Ionicons name="help" size={20} color="#000" />
-  </LinearGradient>
-  <View style={styles.helpButtonGlow} />
-</TouchableOpacity>
-
-    {/* Tickets entered at bottom */}
-    <View style={styles.entriesPosition}>
-      <Animated.Text 
-        style={[
-          styles.entriesText,
-          {
-            opacity: entriesCountAnim,
-            transform: [{
-              translateY: entriesCountAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [20, 0],
-              })
-            }]
-          }
-        ]}
-      >
-        🔥 {totalEntries} {t('raffle.ticketsEnteredThisWeek')}
-      </Animated.Text>
-    </View>
-  </View>
-</ImageBackground>
+          <ImageBackground
+            source={require('../../assets/images/rafflehero.png')}
+            style={styles.heroContainer}
+            imageStyle={{ borderRadius: 12, resizeMode: 'cover' }}
+          >
+            <View style={styles.heroOverlay}>
+              {/* Title stays at top */}
+              <Animated.Text 
+                style={[
+                  styles.heroTitle,
+                  { 
+                    fontFamily: 'Orbitron-Bold',
+                    marginTop: 20,
+                    transform: [{ 
+                        scale: headerFadeAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.8, 1],
+                        })
+                    }]
+                  }
+                ]}
+              >
+                {t('raffle.championsRaffle')}
+              </Animated.Text>
+              
+              {/* Countdown positioned absolutely in center */}
+              <View style={styles.countdownPosition}>
+                <NeonCountdown
+                  targetTime={nextDrawTime}
+                  onPress={navigateToDrawDetails}
+                />
+              </View>
+            </View>
+          </ImageBackground>
         </Animated.View>
 
+        {/* Circular How to Play button - top right */}
+        <TouchableOpacity 
+          onPress={toggleRulesModal} 
+          style={styles.circularHelpButton}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={['#FFD700', '#FFA500', '#FF6B35']}
+            style={styles.helpButtonGradients}
+          >
+            <Ionicons name="help" size={20} color="#000" />
+          </LinearGradient>
+          <View style={styles.helpButtonGlow} />
+        </TouchableOpacity>
 
+        {/* Tickets entered at bottom */}
+        <View style={styles.entriesPosition}>
+          <Animated.Text 
+            style={[
+              styles.entriesText,
+              {
+                opacity: entriesCountAnim,
+                transform: [{
+                    translateY: entriesCountAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                    })
+                }]
+              }
+            ]}
+          >
+            🎟️ {totalEntries} {t('raffle.ticketsEnteredThisWeek')}
+          </Animated.Text>
+        </View>
+      </ScrollView>
+        </Animated.View>
 
         {/* Circular Gaming Enter Draw Button */}
-<View style={styles.circularButtonContainer}>
-  <TouchableOpacity
-    style={styles.circularButtonWrapper}
-    onPress={navigateToDrawDetails}
-    activeOpacity={0.8}
-  >
-    <Animated.View style={[
-      styles.circularButtonGlow,
-      { opacity: headerFadeAnim }
-    ]} />
-    
-    <LinearGradient
-      colors={['#FF0080', '#FF8C00', '#FFD700', '#00FF80', '#0080FF']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.circularButtonBorder}
-    >
-      <View style={styles.circularButtonInner}>
-        <LinearGradient
-          colors={['#1a1a1a', '#2d2d2d', '#1a1a1a']}
-          style={styles.circularButtonCenter}
-        >
-          <Ionicons name="flash" size={32} color="#FFD700" style={styles.buttonIcon} />
-          <Text style={[styles.circularButtonText, { fontFamily: 'Exo2-Bold' }]}>
-            {t('raffle.enterTheDraw')}
-          </Text>
-
-        </LinearGradient>
-      </View>
-    </LinearGradient>
-  </TouchableOpacity>
-</View>
+        <View style={styles.circularButtonContainer}>
+          <TouchableOpacity
+            style={styles.circularButtonWrapper}
+            onPress={navigateToDrawDetails}
+            activeOpacity={0.8}
+          >
+            <Animated.View 
+              style={[
+                styles.circularButtonGlow,
+                { opacity: headerFadeAnim }
+              ]} 
+            />
+            
+            <LinearGradient
+              colors={['#FF0080', '#FF8C00', '#FFD700', '#00FF80', '#0080FF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.circularButtonBorder}
+            >
+              <View style={styles.circularButtonInner}>
+                <LinearGradient
+                  colors={['#1a1a1a', '#2d2d2d', '#1a1a1a']}
+                  style={styles.circularButtonCenter}
+                >
+                  <Ionicons name="flash" size={32} color="#FFD700" style={styles.buttonIcon} />
+                  <Text style={[styles.circularButtonText, { fontFamily: 'Exo2-Bold' }]}>
+                    {t('raffle.enterTheDraw')}
+                  </Text>
+                </LinearGradient>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
 
         {/* Ticket Purchase Panel */}
         <TicketPurchasePanel
@@ -1010,7 +1144,10 @@ const RafflePage: React.FC = () => {
           setTicketsCount={setTicketsCount}
           onTicketPurchased={handleTicketPurchased}
           toggleRulesModal={toggleRulesModal}
-          openTicketsModal={() => setTicketsModalVisible(true)}
+          openTicketsModal={() => { 
+            setTicketsModalVisible(true);
+            console.log("RafflePage: Tickets Owned modal opened."); // LOG_INSERTION_POINT
+          }}
         />
 
         {/* Winners Section */}
@@ -1020,40 +1157,39 @@ const RafflePage: React.FC = () => {
         <Modal
           transparent
           visible={showConfirmation}
-          onRequestClose={() => setShowConfirmation(false)}
+          onRequestClose={() => { 
+            setShowConfirmation(false); 
+            console.log("RafflePage: Confirmation modal closed via request."); // LOG_INSERTION_POINT
+          }}
           animationType="slide"
         >
           <View style={styles.modalOverlay}>
             <View style={styles.confirmationModalContent}>
               <Animated.View style={{ 
-                opacity: sparkleAnim,
-                transform: [
-                  {
-                    scale: sparkleAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.5, 1.2],
-                    })
-                  }
-                ]
+                  opacity: sparkleAnim,
+                  transform: [{ 
+                      scale: sparkleAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.5, 1.2],
+                      })
+                  }]
               }}>
                 <Animated.View style={{
-                  transform: [
-                    {
-                      rotate: sparkleRotateAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '360deg'],
-                      })
-                    }
-                  ]
+                    transform: [{
+                        rotate: sparkleRotateAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['0deg', '360deg'],
+                        })
+                    }]
                 }}>
-                  <Text style={styles.sparkleText}>{t('raffle.sparkleEffect')}</Text>
+                    <Text style={styles.sparkleText}>{t('raffle.sparkleEffect')}</Text>
                 </Animated.View>
               </Animated.View>
               
               <Text style={[styles.modalText, { fontFamily: 'Exo2-Bold' }]}>
                 {t('raffle.congratsPurchase', { 
-                  count: purchasedTickets,
-                  plural: purchasedTickets === 1 ? '' : 's'
+                  count: purchasedTickets, 
+                  plural: purchasedTickets === 1 ? '' : 's' 
                 })}
               </Text>
               
@@ -1066,7 +1202,10 @@ const RafflePage: React.FC = () => {
               
               <TouchableOpacity
                 style={styles.modalButton}
-                onPress={() => setShowConfirmation(false)}
+                onPress={() => { 
+                  setShowConfirmation(false); 
+                  console.log("RafflePage: Confirmation modal closed via button."); // LOG_INSERTION_POINT
+                }}
               >
                 <Text style={styles.modalButtonText}>{t('common.close')}</Text>
               </TouchableOpacity>
@@ -1078,10 +1217,16 @@ const RafflePage: React.FC = () => {
         <Modal
           transparent
           visible={ticketsModalVisible}
-          onRequestClose={() => setTicketsModalVisible(false)}
+          onRequestClose={() => { 
+            setTicketsModalVisible(false); 
+            console.log("RafflePage: Tickets Owned modal closed via request."); // LOG_INSERTION_POINT
+          }}
           animationType="fade"
         >
-          <TouchableWithoutFeedback onPress={() => setTicketsModalVisible(false)}>
+          <TouchableWithoutFeedback onPress={() => { 
+            setTicketsModalVisible(false);
+            console.log("RafflePage: Tickets Owned modal closed by tapping outside."); // LOG_INSERTION_POINT
+          }}>
             <View style={styles.modalOverlay} />
           </TouchableWithoutFeedback>
           
@@ -1098,7 +1243,10 @@ const RafflePage: React.FC = () => {
               </Text>
               <TouchableOpacity
                 style={styles.modalButton}
-                onPress={() => setTicketsModalVisible(false)}
+                onPress={() => { 
+                  setTicketsModalVisible(false);
+                  console.log("RafflePage: Tickets Owned modal closed via button."); // LOG_INSERTION_POINT
+                }}
               >
                 <Text style={styles.modalButtonText}>{t('common.close')}</Text>
               </TouchableOpacity>
@@ -1156,20 +1304,20 @@ const styles = StyleSheet.create({
     borderWidth: 1, // Subtle border
     borderColor: 'rgba(255, 215, 0, 0.2)', // Goldish border
   },
-heroOverlay: {
-  flex: 1,
-  padding: 20,
-  justifyContent: 'flex-start', // Change from 'space-between'
-  alignItems: 'center',
-  backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  position: 'relative', // Add this
-},
+  heroOverlay: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'flex-start', // Change from 'space-between'
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    position: 'relative', // Add this
+  },
   heroTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#FFD700',
     textAlign: 'center',
-    marginTop: 30,
+    marginTop: 30, // Adjusted margin top
     textShadowColor: '#000',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
@@ -1197,188 +1345,188 @@ heroOverlay: {
   },
 
 circularHelpButton: {
-  position: 'absolute',
-  top: 15,
-  right: 15,
-  width: 30,
-  height: 30,
-  borderRadius: 22,
-  elevation: 8,
-  shadowColor: '#FFD700',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.6,
-  shadowRadius: 8,
-  zIndex: 10,
-},
-helpButtonGradient: {
-  width: 30,
-  height: 30,
-  borderRadius: 22,
-  justifyContent: 'center',
-  alignItems: 'center',
-  borderWidth: 2,
-  borderColor: 'rgba(255, 255, 255, 0.3)',
-},
-helpButtonGlow: {
-  position: 'absolute',
-  top: -8,
-  left: -8,
-  right: -8,
-  bottom: -8,
-  borderRadius: 30,
-  backgroundColor: 'rgba(255, 215, 0, 0.2)',
-  shadowColor: '#FFD700',
-  shadowOffset: { width: 0, height: 0 },
-  shadowOpacity: 0.8,
-  shadowRadius: 12,
-  elevation: 5,
-  zIndex: -1,
-},
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    width: 30,
+    height: 30,
+    borderRadius: 22,
+    elevation: 8,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    zIndex: 10,
+  },
+  helpButtonGradients: {
+    width: 30,
+    height: 30,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  helpButtonGlow: {
+    position: 'absolute',
+    top: -8,
+    left: -8,
+    right: -8,
+    bottom: -8,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 12,
+    elevation: 5,
+    zIndex: -1,
+  },
   // === REDESIGNED WINNERS CONTAINER ===
-// === REDESIGNED WINNERS STYLES ===
-winnersContainer: {
-  marginHorizontal: 8,
-  marginBottom: 16,
-  borderRadius: 20,
-  overflow: 'hidden',
-  borderWidth: 3,
-  borderColor: 'rgba(255, 215, 0, 0.8)',
-  elevation: 15,
-  shadowColor: '#FFD700',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.7,
-  shadowRadius: 15,
-},
-winnersInnerContainer: {
-  padding: 20,
-  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  borderRadius: 17,
-},
-winnersHeader: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginBottom: 20,
-},
-trophyIcon: {
-  textShadowColor: '#FFD700',
-  textShadowOffset: { width: 0, height: 0 },
-  textShadowRadius: 10,
-},
-sectionTitle: {
-  fontSize: 24,
-  fontWeight: 'bold',
-  marginHorizontal: 12,
-  color: '#FFD700',
-  textAlign: 'center',
-  textShadowColor: '#FF8C00',
-  textShadowOffset: { width: 2, height: 2 },
-  textShadowRadius: 5,
-  textTransform: 'uppercase',
-  letterSpacing: 1,
-},
-championCard: {
-  marginBottom: 15,
-  borderRadius: 16,
-  overflow: 'hidden',
-  position: 'relative',
-  elevation: 10,
-  shadowColor: '#FFD700',
-  shadowOffset: { width: 0, height: 5 },
-  shadowOpacity: 0.5,
-  shadowRadius: 10,
-},
-shineOverlay: {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  width: 50,
-  zIndex: 2,
-  transform: [{ skewX: '-20deg' }],
-},
-championBorder: {
-  padding: 3,
-  borderRadius: 16,
-},
-championInner: {
-  backgroundColor: 'rgba(20, 20, 20, 0.95)',
-  padding: 16,
-  borderRadius: 13,
-  flexDirection: 'row',
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: 'rgba(255, 215, 0, 0.3)',
-},
-winnerImageContainer: {
-  position: 'relative',
-  marginRight: 16,
-},
-championImage: {
-  width: 56,
-  height: 56,
-  borderRadius: 28,
-  borderWidth: 3,
-  borderColor: '#FFD700',
-  shadowColor: '#FFD700',
-  shadowOffset: { width: 0, height: 0 },
-  shadowOpacity: 0.8,
-  shadowRadius: 8,
-  elevation: 8,
-},
-crownOverlay: {
-  position: 'absolute',
-  top: -5,
-  right: -5,
-  backgroundColor: 'rgba(255, 215, 0, 0.9)',
-  borderRadius: 12,
-  padding: 4,
-  borderWidth: 1,
-  borderColor: '#FFA500',
-},
-winnerInfo: {
-  flex: 1,
-},
-championName: {
-  fontSize: 18,
-  color: '#FFD700',
-  fontWeight: 'bold',
-  marginBottom: 4,
-  textShadowColor: '#FF8C00',
-  textShadowOffset: { width: 1, height: 1 },
-  textShadowRadius: 3,
-},
-prizeText: {
-  fontSize: 14,
-  color: '#FFA500',
-  fontWeight: '600',
-  textShadowColor: '#000',
-  textShadowOffset: { width: 1, height: 1 },
-  textShadowRadius: 2,
-},
-celebrationEffects: {
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-sparkles: {
-  fontSize: 24,
-  textShadowColor: '#FFD700',
-  textShadowOffset: { width: 0, height: 0 },
-  textShadowRadius: 10,
-},
-noWinnersContainer: {
-  alignItems: 'center',
-  paddingVertical: 30,
-},
-noWinnersText: {
-  fontSize: 18,
-  color: '#888',
-  textAlign: 'center',
-  fontStyle: 'italic',
-  marginTop: 12,
-},
+  // === REDESIGNED WINNERS STYLES ===
+  winnersContainer: {
+    marginHorizontal: 8,
+    marginBottom: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 215, 0, 0.8)',
+    elevation: 15,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.7,
+    shadowRadius: 15,
+  },
+  winnersInnerContainer: {
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 17,
+  },
+  winnersHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  trophyIcon: {
+    textShadowColor: '#FFD700',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginHorizontal: 12,
+    color: '#FFD700',
+    textAlign: 'center',
+    textShadowColor: '#FF8C00',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 5,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  championCard: {
+    marginBottom: 15,
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+    elevation: 10,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+  },
+  shineOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    width: 50,
+    zIndex: 2,
+    transform: [{ skewX: '-20deg' }],
+  },
+  championBorder: {
+    padding: 3,
+    borderRadius: 16,
+  },
+  championInner: {
+    backgroundColor: 'rgba(20, 20, 20, 0.95)',
+    padding: 16,
+    borderRadius: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  winnerImageContainer: {
+    position: 'relative',
+    marginRight: 16,
+  },
+  championImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 3,
+    borderColor: '#FFD700',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  crownOverlay: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: 'rgba(255, 215, 0, 0.9)',
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#FFA500',
+  },
+  winnerInfo: {
+    flex: 1,
+  },
+  championName: {
+    fontSize: 18,
+    color: '#FFD700',
+    fontWeight: 'bold',
+    marginBottom: 4,
+    textShadowColor: '#FF8C00',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  prizeText: {
+    fontSize: 14,
+    color: '#FFA500',
+    fontWeight: '600',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  celebrationEffects: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sparkles: {
+    fontSize: 24,
+    textShadowColor: '#FFD700',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  noWinnersContainer: {
+    alignItems: 'center',
+    paddingVertical: 30,
+  },
+  noWinnersText: {
+    fontSize: 18,
+    color: '#888',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 12,
+  },
 
   // === REDESIGNED BUY RAFFLE TICKETS CONTAINER ===
   rafflePurchaseContainer: {
@@ -1398,7 +1546,7 @@ noWinnersText: {
   purchaseContainer: {
     padding: 20, // More padding
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Darker, semi-transparent overlay
-    borderRadius: 14, // Match outer border
+    borderRadius: 14, // Match outer border radius
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)', // Inner subtle border
   },
@@ -1534,7 +1682,7 @@ noWinnersText: {
     padding: 28, // More padding
     borderRadius: 16, // More rounded
     alignItems: 'center',
-    width: '90%',
+    width: '90%', // Wider
     maxWidth: 450,
     elevation: 12,
     shadowColor: '#000',
@@ -1653,149 +1801,149 @@ noWinnersText: {
     fontWeight: 'bold',
   },
   neonContainer: {
-  position: 'relative',
-  marginVertical: 12,
-  top:50
-},
-neonGlow: {
-  position: 'absolute',
-  top: -10,
-  left: -10,
-  right: -10,
-  bottom: -10,
-  backgroundColor: 'rgba(0, 255, 255, 0.1)',
-  borderRadius: 20,
-  shadowColor: '#00FFFF',
-  shadowOffset: { width: 0, height: 0 },
-  shadowOpacity: 0.8,
-  shadowRadius: 20,
-  elevation: 20,
-},
-neonBorder: {
-  padding: 2,
-  borderRadius: 16,
-},
-neonInner: {
-  backgroundColor: '#0a0a0a',
-  padding: 20,
-  borderRadius: 14,
-  alignItems: 'center',
-},
-neonTitle: {
-  color: '#00FFFF',
-  fontSize: 14,
-  fontWeight: 'bold',
-  textTransform: 'uppercase',
-  letterSpacing: 2,
-  marginBottom: 16,
-  textShadowColor: '#00FFFF',
-  textShadowOffset: { width: 0, height: 0 },
-  textShadowRadius: 10,
-},
-neonTimeContainer: {
-  flexDirection: 'row',
-  justifyContent: 'space-around',
-  width: '100%',
-},
-neonTimeSegment: {
-  alignItems: 'center',
-},
-neonTimeValue: {
-  fontSize: 28,
-  fontFamily: 'monospace',
-  fontWeight: 'bold',
-  textShadowColor: 'currentColor',
-  textShadowOffset: { width: 0, height: 0 },
-  textShadowRadius: 15,
-},
-neonTimeLabel: {
-  color: '#666',
-  fontSize: 10,
-  fontWeight: 'bold',
-  textTransform: 'uppercase',
-  letterSpacing: 1,
-  marginTop: 4,
-},
-circularButtonContainer: {
-  alignItems: 'center',
-  marginVertical: 20,
-  position: 'relative',
-},
-circularButtonWrapper: {
-  position: 'relative',
-},
-circularButtonGlow: {
-  position: 'absolute',
-  width: 140,
-  height: 140,
-  borderRadius: 70,
-  backgroundColor: 'rgba(255, 215, 0, 0.3)',
-  top: -10,
-  left: -10,
-  shadowColor: '#FFD700',
-  shadowOffset: { width: 0, height: 0 },
-  shadowOpacity: 1,
-  shadowRadius: 30,
-  elevation: 30,
-},
-circularButtonBorder: {
-  width: 120,
-  height: 120,
-  borderRadius: 60,
-  padding: 3,
-  shadowColor: '#FF0080',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.6,
-  shadowRadius: 15,
-  elevation: 15,
-},
-circularButtonInner: {
-  width: '100%',
-  height: '100%',
-  borderRadius: 57,
-  overflow: 'hidden',
-},
-circularButtonCenter: {
-  width: '100%',
-  height: '100%',
-  borderRadius: 57,
-  justifyContent: 'center',
-  alignItems: 'center',
-  borderWidth: 2,
-  borderColor: 'rgba(255, 215, 0, 0.4)',
-  position: 'relative',
-},
-buttonIcon: {
-  textShadowColor: '#FFD700',
-  textShadowOffset: { width: 0, height: 0 },
-  textShadowRadius: 10,
-  marginBottom: 4,
-},
-circularButtonText: {
-  color: '#fff',
-  fontSize: 14,
-  fontWeight: 'bold',
-  textAlign: 'center',
-  textTransform: 'uppercase',
-  letterSpacing: 1,
-  lineHeight: 14,
-  textShadowColor: '#FFD700',
-  textShadowOffset: { width: 0, height: 1 },
-  textShadowRadius: 3,
-},
-countdownPosition: {
-  position: 'absolute',
-  top: '60%', // Adjust this percentage to move up/down
-  left: 0,
-  right: 0,
-  alignItems: 'center',
-},
+    position: 'relative',
+    marginVertical: 12,
+    top:50
+  },
+  neonGlow: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+    right: -10,
+    bottom: -10,
+    backgroundColor: 'rgba(0, 255, 255, 0.1)',
+    borderRadius: 20,
+    shadowColor: '#00FFFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  neonBorder: {
+    padding: 2,
+    borderRadius: 16,
+  },
+  neonInner: {
+    backgroundColor: '#0a0a0a',
+    padding: 20,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  neonTitle: {
+    color: '#00FFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: 16,
+    textShadowColor: '#00FFFF',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  neonTimeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  neonTimeSegment: {
+    alignItems: 'center',
+  },
+  neonTimeValue: {
+    fontSize: 28,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    textShadowColor: 'currentColor',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
+  },
+  neonTimeLabel: {
+    color: '#666',
+    fontSize: 10,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 4,
+  },
+  circularButtonContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+    position: 'relative',
+  },
+  circularButtonWrapper: {
+    position: 'relative',
+  },
+  circularButtonGlow: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255, 215, 0, 0.3)',
+    top: -10,
+    left: -10,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 30,
+    elevation: 30,
+  },
+  circularButtonBorder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    padding: 3,
+    shadowColor: '#FF0080',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
+    elevation: 15,
+  },
+  circularButtonInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 57,
+    overflow: 'hidden',
+  },
+  circularButtonCenter: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 57,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.4)',
+    position: 'relative',
+  },
+  buttonIcon: {
+    textShadowColor: '#FFD700',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+    marginBottom: 4,
+  },
+  circularButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    lineHeight: 14,
+    textShadowColor: '#FFD700',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  countdownPosition: {
+    position: 'absolute',
+    top: '60%', // Adjust this percentage to move up/down
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
 
-entriesPosition: {
-  position: 'absolute',
-  bottom: 0, // Fixed distance from bottom
-  left: 0,
-  right: 0,
-  alignItems: 'center',
-}
+  entriesPosition: {
+    position: 'absolute',
+    bottom: 0, // Fixed distance from bottom
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
 });
