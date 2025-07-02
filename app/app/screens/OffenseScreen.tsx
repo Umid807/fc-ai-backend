@@ -20,12 +20,12 @@ import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useTranslation } from 'react-i18next'; // <--- ADDED: i18n import
+import { useTranslation } from 'react-i18next'; // <-- ADDED: i18n import
 
-// If you’re using Expo:
+// If you're using Expo:
 import { LinearGradient } from 'expo-linear-gradient';
 
-// If you’re NOT using Expo, install react-native-linear-gradient:
+// If you're NOT using Expo, install react-native-linear-gradient:
 // import LinearGradient from 'react-native-linear-gradient';
 
 // Firebase imports
@@ -51,6 +51,8 @@ import SkillMovesTable from '../screens/SkillMovesTable';
 import { matchDayData } from '../../assets/data/prematch';
 import { halfTime as halfTimeDataFromFile } from '../../assets/data/half_break';
 
+console.log("OffenseScreen: Module loaded.");
+
 const { width, height } = Dimensions.get('window');
 const db = getFirestore(firebaseApp);
 const auth = getAuth(firebaseApp);
@@ -63,7 +65,7 @@ function ensureHttps(url = '') {
 
 /** Extract YouTube video ID */
 function extractYoutubeVideoId(url = '') {
-  const regex = /(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+  const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([\w-]{11})/;
   const match = url.match(regex);
   return match ? match[1] : null;
 }
@@ -92,11 +94,13 @@ function getYoutubeThumbnail(url = '') {
 
 /** Shuffle array in place */
 function shuffle(array) {
+  console.log("OffenseScreen: Shuffling array.");
   let currentIndex = array.length, randomIndex;
   while (currentIndex !== 0) {
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
-    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
   }
   return array;
 }
@@ -117,10 +121,13 @@ export default function ExploreAttackArsenalScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const router = useRouter();
-  const { t } = useTranslation(); // <--- ADDED: useTranslation hook
+  const { t } = useTranslation(); // <-- ADDED: useTranslation hook
 
-  // ======= HEADER =======
+  console.log("OffenseScreen: Component mounted successfully.");
+
+  // ========== HEADER ==========
   useLayoutEffect(() => {
+    console.log("OffenseScreen: Setting header options.");
     navigation.setOptions({
       headerShown: true,
       header: (props) => (
@@ -135,39 +142,59 @@ export default function ExploreAttackArsenalScreen() {
     });
   }, [navigation, route, t]); // MODIFIED: Added t to dependency array
 
-  // ======= STATE =======
+  // ========== STATE ==========
   const [selectedCategory, setSelectedCategory] = useState('formations');
+  console.log(`OffenseScreen: Initializing state: selectedCategory = ${selectedCategory}`);
 
   // Hero articles (3 swipeable)
   const [heroArticles, setHeroArticles] = useState([]);
+  console.log("OffenseScreen: Initializing state: heroArticles = []");
   const [loadingHeroArticles, setLoadingHeroArticles] = useState(true);
+  console.log("OffenseScreen: Initializing state: loadingHeroArticles = true");
   const [heroArticlesError, setHeroArticlesError] = useState(false);
+  console.log("OffenseScreen: Initializing state: heroArticlesError = false");
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+  console.log("OffenseScreen: Initializing state: currentHeroIndex = 0");
 
   // Tactical videos
   const [tacticalVideos, setTacticalVideos] = useState([]);
+  console.log("OffenseScreen: Initializing state: tacticalVideos = []");
   const [loadingTacticalVideos, setLoadingTacticalVideos] = useState(true);
+  console.log("OffenseScreen: Initializing state: loadingTacticalVideos = true");
   const [tacticalVideosError, setTacticalVideosError] = useState(false);
+  console.log("OffenseScreen: Initializing state: tacticalVideosError = false");
 
   // Modal & grid state
   const [modalVisible, setModalVisible] = useState(false);
+  console.log("OffenseScreen: Initializing state: modalVisible = false");
   const [selectedItem, setSelectedItem] = useState(null);
+  console.log("OffenseScreen: Initializing state: selectedItem = null");
 
   // Pre-match modal
   const [selectedGameMode, setSelectedGameMode] = useState(null);
+  console.log("OffenseScreen: Initializing state: selectedGameMode = null");
   const [selectedDivision, setSelectedDivision] = useState(null);
+  console.log("OffenseScreen: Initializing state: selectedDivision = null");
   const [showPrematchTips, setShowPrematchTips] = useState(false);
+  console.log("OffenseScreen: Initializing state: showPrematchTips = false");
   const [prematchDisplayedTips, setPrematchDisplayedTips] = useState([]);
+  console.log("OffenseScreen: Initializing state: prematchDisplayedTips = []");
 
   // Mid-time modal
   const [midtimeStep, setMidtimeStep] = useState(1);
+  console.log("OffenseScreen: Initializing state: midtimeStep = 1");
   const [midtimePerformance, setMidtimePerformance] = useState(null);
+  console.log("OffenseScreen: Initializing state: midtimePerformance = null");
   const [midtimeConcern, setMidtimeConcern] = useState(null);
+  console.log("OffenseScreen: Initializing state: midtimeConcern = null");
   const [showMidtimeTips, setShowMidtimeTips] = useState(false);
+  console.log("OffenseScreen: Initializing state: showMidtimeTips = false");
   const [midtimeDisplayedTips, setMidtimeDisplayedTips] = useState([]);
+  console.log("OffenseScreen: Initializing state: midtimeDisplayedTips = []");
 
   // Post-game
   const [postgameStep, setPostgameStep] = useState(1);
+  console.log("OffenseScreen: Initializing state: postgameStep = 1");
   const [postgameAnswers, setPostgameAnswers] = useState({
     overallPerformance: 0,
     attacking: 0,
@@ -175,8 +202,11 @@ export default function ExploreAttackArsenalScreen() {
     control: 0,
     mentality: 0,
   });
+  console.log("OffenseScreen: Initializing state: postgameAnswers = { ... }");
   const [postgameProgress, setPostgameProgress] = useState(0);
+  console.log("OffenseScreen: Initializing state: postgameProgress = 0");
   const [showPostgameSurveyComplete, setShowPostgameSurveyComplete] = useState(false);
+  console.log("OffenseScreen: Initializing state: showPostgameSurveyComplete = false");
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -184,26 +214,32 @@ export default function ExploreAttackArsenalScreen() {
   const ctaOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    console.log("OffenseScreen: useEffect triggered for initial load of post-game progress.");
     loadPostGameProgress();
     return () => {
       fadeAnim.stopAnimation();
       slideAnim.stopAnimation();
       ctaOpacity.stopAnimation();
+      console.log("OffenseScreen: Animation stopped on unmount.");
     };
   }, []);
 
   async function loadPostGameProgress() {
+    console.log("OffenseScreen: Loading post-game progress from AsyncStorage.");
     try {
-      const progressStr = await AsyncStorage.getItem('postGameCheckinCount');
+      const progressStr = await AsyncStorage.getItem('postGameCheckingCount');
       if (progressStr) {
         setPostgameProgress(parseInt(progressStr, 10));
+        console.log(`OffenseScreen: Successfully loaded post-game progress. Progress: ${progressStr}`);
+      } else {
+        console.log("OffenseScreen: No saved post-game progress found in AsyncStorage.");
       }
     } catch (err) {
-      console.log('Error loading postGameCheckinCount:', err);
+      console.log('OffenseScreen: Error loading postGameCheckingCount:', err);
     }
   }
 
-  // ======= CATEGORY DEFINITIONS =======
+  // ========== CATEGORY DEFINITIONS ==========
   const categories = [
     { id: 'formations', label: t('offenseScreen.categoryFormations'), background: require('../../assets/images/button.png') }, // MODIFIED: Translated label
     { id: 'matchDayAssistant', label: t('offenseScreen.categoryMatchDayAssistant'), background: require('../../assets/images/button.png') }, // MODIFIED: Translated label
@@ -211,7 +247,7 @@ export default function ExploreAttackArsenalScreen() {
     { id: 'tacticalVideos', label: t('offenseScreen.categoryTacticalVideos'), background: require('../../assets/images/button.png') }, // MODIFIED: Translated label
   ];
 
-  // ======= GRID DATA =======
+  // ========== GRID DATA ==========
   const gridData = {
     formations: [
       {
@@ -306,8 +342,9 @@ export default function ExploreAttackArsenalScreen() {
     ],
   };
 
-  // ======= 1) TACTICAL VIDEOS =======
+  // ========== 1) TACTICAL VIDEOS ==========
   useEffect(() => {
+    console.log("OffenseScreen: Fetching tactical videos from Firebase.");
     setLoadingTacticalVideos(true);
     setTacticalVideosError(false);
     const database = getDatabase(firebaseApp);
@@ -317,6 +354,7 @@ export default function ExploreAttackArsenalScreen() {
       (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
+          console.log("OffenseScreen: Fetched tactical videos data from Firebase Realtime DB.");
           const allVideos = Object.keys(data).map((key) => ({ id: key, ...data[key] }));
           const attackVideos = allVideos.filter((video) => video.category === 'attack');
           attackVideos.sort((a, b) => (b.views || 0) - (a.views || 0));
@@ -331,37 +369,45 @@ export default function ExploreAttackArsenalScreen() {
             };
           });
           setTacticalVideos(top6);
+          console.log(`OffenseScreen: Set tactical videos state with ${top6.length} items.`);
         } else {
           setTacticalVideos([]);
+          console.log("OffenseScreen: No tactical videos found in Firebase Realtime DB.");
         }
         setLoadingTacticalVideos(false);
+        console.log("OffenseScreen: Finished loading tactical videos.");
       },
       (error) => {
-        console.error('Realtime DB Error:', error);
+        console.error('OffenseScreen: Realtime DB Error:', error);
         setTacticalVideosError(true);
         setLoadingTacticalVideos(false);
+        console.log("OffenseScreen: Setting tacticalVideosError to true and loadingTacticalVideos to false.");
       }
     );
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      console.log("OffenseScreen: Unsubscribed from tactical videos listener.");
+    };
   }, [t]); // MODIFIED: Added t to dependency array
 
-  // ======= 2) HERO ARTICLES (Swipeable Carousel) =======
+  // ========== 2) HERO ARTICLES (Swipeable Carousel) ==========
   async function fetchHeroArticles_Attacking() {
+    console.log("OffenseScreen: Fetching hero articles (Attacking category).");
     setLoadingHeroArticles(true);
     setHeroArticlesError(false);
-  
+
     try {
       const now = Date.now();
       const midnight = new Date();
       midnight.setHours(0, 0, 0, 0);
-  
+
       const cacheKey = 'heroArticles_Attacking';
       const cacheTimeKey = 'lastHeroArticlesPickTime_Attacking';
-  
+
       // --- COMMENTING OUT THE CACHE LOADING LOGIC FOR DEV ---
       // const lastPickTimeStr = await AsyncStorage.getItem(cacheTimeKey);
       // const lastPickTime = lastPickTimeStr ? parseInt(lastPickTimeStr, 10) : 0;
-  
+
       // // Use cached articles if it's still today's selection
       // if (lastPickTime >= midnight.getTime()) {
       //   const cachedArticlesStr = await AsyncStorage.getItem(cacheKey);
@@ -372,29 +418,30 @@ export default function ExploreAttackArsenalScreen() {
       //     return;
       //   }
       // }
-  
-      console.log('[FIRESTORE] Fetching new Attacking hero articles...');
+
+      console.log('[FIRESTORE] Attempting to fetch new Attacking hero articles.');
       const q = query(collection(db, 'Articles'), where('category', '==', 'Attacking'));
       const querySnapshot = await getDocs(q);
       const articles = [];
-  
+
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         console.log(`[FIRESTORE] Fetched docSnap (id: ${docSnap.id}):`, data);
         articles.push({ id: docSnap.id, ...data });
       });
-  
+
       console.log('[FIRESTORE] All fetched articles before shuffle:', articles);
-  
+
       if (articles.length > 0) {
         shuffle(articles);
         console.log('[FIRESTORE] Articles after shuffle:', articles);
-  
+
         // Select the first 3 unique articles
         const selectedArticles = articles.slice(0, 3);
         console.log('[FIRESTORE] Selected hero articles:', selectedArticles);
-  
+
         setHeroArticles(selectedArticles);
+        console.log(`OffenseScreen: Setting heroArticles state with ${selectedArticles.length} items.`);
         await AsyncStorage.setItem(cacheTimeKey, now.toString());
         await AsyncStorage.setItem(cacheKey, JSON.stringify(selectedArticles));
         console.log('[CACHE] Saved new Attacking hero articles to AsyncStorage.');
@@ -403,35 +450,37 @@ export default function ExploreAttackArsenalScreen() {
         setHeroArticles([]);
       }
     } catch (error) {
-      console.log('Error fetching Attacking hero articles:', error);
+      console.log('OffenseScreen: Error fetching Attacking hero articles:', error);
       setHeroArticlesError(true);
     } finally {
       setLoadingHeroArticles(false);
+      console.log("OffenseScreen: Setting loadingHeroArticles to false.");
     }
   }
-  
+
   useEffect(() => {
     console.log('[EFFECT] Calling fetchHeroArticles_Attacking...');
     fetchHeroArticles_Attacking();
   }, []);
-  
-  // FlatList ref for hero
+
+  // FlatList ref for hero articles
   const flatListRef = useRef(null);
-  
+
   const handleHeroArticlePress = (article) => {
-    console.log('[NAVIGATE] Pressing hero article:', article);
+    console.log(`OffenseScreen: Hero article pressed. Article ID: ${article.id}, Title: ${article.title}`);
     router.push({
       pathname: 'screens/ArticleScreen',
       params: { article: JSON.stringify(article) },
     });
+    console.log("OffenseScreen: Navigating to ArticleScreen.");
   };
-  
+
   // Instead of full screen width, let's use .92 for container & item
   const HERO_WIDTH = width * 0.92;
-  
+
   const renderHeroItem = ({ item, index }) => {
-    console.log(`[RENDER] Hero item index ${index}:`, item);
-  
+    console.log(`OffenseScreen: Rendering hero item index ${index}:`, item);
+
     const backgroundImage = heroImages[index] || heroImages[0];
     return (
       <TouchableOpacity
@@ -459,15 +508,15 @@ export default function ExploreAttackArsenalScreen() {
       </TouchableOpacity>
     );
   };
-  
+
   const onHeroScrollEnd = (event) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
     const viewSize = event.nativeEvent.layoutMeasurement.width;
     const index = Math.floor(contentOffset / viewSize);
     setCurrentHeroIndex(index);
+    console.log(`OffenseScreen: Hero carousel scrolled. New index: ${index}`);
   };
-  
-  
+
 
   // ========== PRE-MATCH TIPS ==========
   const divisionMapping = {
@@ -477,27 +526,38 @@ export default function ExploreAttackArsenalScreen() {
     'Elite': 'elite',
   };
   function generatePrematchTips() {
+    console.log("OffenseScreen: Generating pre-match tips.");
     let tips = [];
     if (selectedGameMode === 'UT' || selectedGameMode === 'Seasons') {
+      console.log(`OffenseScreen: Game mode is ${selectedGameMode}.`);
       if (selectedDivision) {
+        console.log(`OffenseScreen: Division is ${selectedDivision}.`);
         const subKey = divisionMapping[selectedDivision];
         tips = (matchDayData.preMatch.UT && matchDayData.preMatch.UT[subKey]) || [];
+        console.log(`OffenseScreen: Fetched UT/Seasons pre-match tips for division ${subKey}. Tips count: ${tips.length}`);
       }
     } else if (selectedGameMode === 'Career') {
       tips = matchDayData.preMatch.careerMode || [];
+      console.log("OffenseScreen: Fetched Career Mode pre-match tips. Tips count: ", tips.length);
     } else {
       tips = matchDayData.preMatch.general || [];
+      console.log("OffenseScreen: Fetched general pre-match tips. Tips count: ", tips.length);
     }
     if (tips.length === 0) {
       tips = matchDayData.preMatch.general || [];
+      console.log("OffenseScreen: No specific pre-match tips found, falling back to general. Tips count: ", tips.length);
     }
     const shuffled = shuffle([...tips]);
+    console.log("OffenseScreen: Shuffled pre-match tips.");
     setPrematchDisplayedTips(shuffled.slice(0, 3));
+    console.log(`OffenseScreen: Setting prematchDisplayedTips with ${shuffled.slice(0,3).length} items.`);
     setShowPrematchTips(true);
+    console.log("OffenseScreen: Setting showPrematchTips to true.");
   }
 
   // ========== MID-TIME TIPS ==========
   function generateMidtimeTips() {
+    console.log("OffenseScreen: Generating mid-time tips.");
     let tipsPerformance = [];
     let tipsConcern = [];
 
@@ -518,72 +578,50 @@ export default function ExploreAttackArsenalScreen() {
     };
 
     if (midtimePerformance) {
+      console.log(`OffenseScreen: Mid-time performance feedback selected: ${midtimePerformance}`);
       const perfKey = performanceMapping[midtimePerformance];
       const foundPerformance =
         halfTimeContent.performanceFeedback.find(
           (item) => item.level.toLowerCase() === perfKey.toLowerCase()
         ) || { tips: [] };
       tipsPerformance = foundPerformance.tips.map((tip) => tip.text) || [];
+      console.log(`OffenseScreen: Fetched performance tips. Count: ${tipsPerformance.length}`);
     }
 
     if (midtimeConcern) {
+      console.log(`OffenseScreen: Mid-time concern selected: ${midtimeConcern}`);
       const concernKey = concernMapping[midtimeConcern];
       tipsConcern = halfTimeContent.mainConcern[concernKey] || [];
+      console.log(`OffenseScreen: Fetched concern tips. Count: ${tipsConcern.length}`);
     }
 
     const combined = [...tipsPerformance, ...tipsConcern];
+    console.log(`OffenseScreen: Combined performance and concern tips. Total tips: ${combined.length}`);
     if (combined.length === 0) {
       const evenFallback = halfTimeContent.performanceFeedback.find(
         (item) => item.level.toLowerCase() === 'even'
       );
       if (evenFallback && evenFallback.tips && evenFallback.tips.length > 0) {
         combined.push(...evenFallback.tips.map((tip) => tip.text));
+        console.log("OffenseScreen: No specific mid-time tips found, falling back to 'even' performance. Added fallback tips.");
       } else {
         combined.push(t('offenseScreen.noMidtimeTipsAvailable')); // MODIFIED: Translated 'No mid-time tips available.'
+        console.log("OffenseScreen: No mid-time tips available, adding generic message.");
       }
     }
 
     const shuffled = shuffle([...combined]);
+    console.log("OffenseScreen: Shuffled mid-time tips.");
     const finalTips = shuffled.slice(0, 3);
     setMidtimeDisplayedTips(finalTips);
+    console.log(`OffenseScreen: Setting midtimeDisplayedTips with ${finalTips.length} items.`);
     setShowMidtimeTips(true);
+    console.log("OffenseScreen: Setting showMidtimeTips to true.");
   }
 
   // ========== POST-GAME SURVEY ==========
-  const postGameOptions = {
-    1: [
-      { label: t('offenseScreen.postGameCrushedIt'), rating: 5 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGamePrettySolid'), rating: 4 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameMeh'), rating: 3 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameToughGame'), rating: 2 }, // MODIFIED: Translated label
-    ],
-    2: [
-      { label: t('offenseScreen.postGameGoalMachine'), rating: 5 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameSolidEffort'), rating: 4 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameHitOrMiss'), rating: 3 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameBluntAttack'), rating: 2 }, // MODIFIED: Translated label
-    ],
-    3: [
-      { label: t('offenseScreen.postGameBrickWall'), rating: 5 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameReliableDefense'), rating: 4 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameLeakyMoments'), rating: 3 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameWideOpen'), rating: 2 }, // MODIFIED: Translated label
-    ],
-    4: [
-      { label: t('offenseScreen.postGameMaestroMode'), rating: 5 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameFairlySteady'), rating: 4 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGame5050Battle'), rating: 3 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameChaotic'), rating: 2 }, // MODIFIED: Translated label
-    ],
-    5: [
-      { label: t('offenseScreen.postGameZenMaster'), rating: 5 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameMostlyComposed'), rating: 4 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameOnEdge'), rating: 3 }, // MODIFIED: Translated label
-      { label: t('offenseScreen.postGameTilted'), rating: 2 }, // MODIFIED: Translated label
-    ],
-  };
-
   function handlePostGameAnswer(rating) {
+    console.log(`OffenseScreen: Post-game answer submitted for step ${postgameStep}. Rating: ${rating}`);
     let newAnswers = { ...postgameAnswers };
     switch (postgameStep) {
       case 1:
@@ -605,22 +643,27 @@ export default function ExploreAttackArsenalScreen() {
         break;
     }
     setPostgameAnswers(newAnswers);
+    console.log("OffenseScreen: Updating post-game answers state.");
 
     if (postgameStep < 5) {
       setPostgameStep(postgameStep + 1);
+      console.log(`OffenseScreen: Advancing to next post-game step. New step: ${postgameStep + 1}`);
     } else {
       finalizePostGameSurvey(newAnswers);
+      console.log("OffenseScreen: Finalizing post-game survey.");
     }
   }
 
   async function finalizePostGameSurvey(finalAnswers) {
+    console.log("OffenseScreen: Finalizing post-game survey.");
     setPostgameStep(6);
     setShowPostgameSurveyComplete(true);
 
     let newProgress = postgameProgress + 1;
     if (newProgress > 100) newProgress = 100;
     setPostgameProgress(newProgress);
-    await AsyncStorage.setItem('postGameCheckinCount', String(newProgress));
+    await AsyncStorage.setItem('postGameCheckingCount', String(newProgress));
+    console.log(`OffenseScreen: Saving post-game checking count to AsyncStorage: ${newProgress}`);
 
     const newGameId = newProgress;
     const gameData = {
@@ -643,25 +686,36 @@ export default function ExploreAttackArsenalScreen() {
   }
 
   async function storeLocalGameData(newGame) {
+    console.log(`OffenseScreen: Storing local game data for game ID: ${newGame.gameId}`);
     try {
       const existingStr = await AsyncStorage.getItem('localPostGameEntries');
       let existing = existingStr ? JSON.parse(existingStr) : [];
       existing.push({ ...newGame, uploaded: false });
       await AsyncStorage.setItem('localPostGameEntries', JSON.stringify(existing));
+      console.log(`OffenseScreen: Successfully stored local game data for game ID: ${newGame.gameId}`);
     } catch (err) {
-      console.log('Error storing local game data:', err);
+      console.log('OffenseScreen: Error storing local game data:', err);
     }
   }
 
   async function maybeUploadPostGameData() {
+    console.log("OffenseScreen: Checking for un-uploaded post-game data.");
     try {
       const existingStr = await AsyncStorage.getItem('localPostGameEntries');
-      if (!existingStr) return;
+      if (!existingStr) {
+        console.log("OffenseScreen: No local post-game entries found to upload.");
+        return;
+      }
       let entries = JSON.parse(existingStr);
       let unUploaded = entries.filter((g) => !g.uploaded);
-      if (unUploaded.length < 10) return;
+      console.log(`OffenseScreen: Found ${unUploaded.length} un-uploaded entries.`);
+      if (unUploaded.length < 10) {
+        console.log("OffenseScreen: Less than 10 un-uploaded entries, skipping batch upload.");
+        return;
+      }
 
       const batch = unUploaded.slice(0, 10);
+      console.log(`OffenseScreen: Uploading a batch of ${batch.length} post-game entries.`);
       const summary = summarizeGames(batch);
       await uploadPostGameSummary(summary);
 
@@ -672,12 +726,14 @@ export default function ExploreAttackArsenalScreen() {
         return item;
       });
       await AsyncStorage.setItem('localPostGameEntries', JSON.stringify(updated));
+      console.log("OffenseScreen: Updated local post-game entries with uploaded status.");
     } catch (err) {
-      console.log('maybeUploadPostGameData error:', err);
+      console.log('OffenseScreen: maybeUploadPostGameData error:', err);
     }
   }
 
   function summarizeGames(games) {
+    console.log(`OffenseScreen: Summarizing ${games.length} games.`);
     let totalOverall = 0;
     let totalAttacking = 0;
     let totalDefending = 0;
@@ -692,7 +748,7 @@ export default function ExploreAttackArsenalScreen() {
       totalMentality += g.ratings.mentality;
     });
     const avg = (val) => Math.round((val / games.length) * 10) / 10;
-    return {
+    const summary = {
       gamesPlayed: games.length,
       averages: {
         overallPerformance: avg(totalOverall),
@@ -703,16 +759,19 @@ export default function ExploreAttackArsenalScreen() {
       },
       timestamp: new Date().toISOString(),
     };
+    console.log("OffenseScreen: Game summary generated:", summary);
+    return summary;
   }
 
   async function uploadPostGameSummary(summary) {
+    console.log("OffenseScreen: Attempting to upload post-game summary to Firestore.");
     try {
       const user = auth.currentUser;
       if (!user) {
         console.log(t('offenseScreen.noUserSignedIn')); // MODIFIED: Translated message
         return;
       }
-      const docRef = doc(db, 'postGameTracker', user.uid);
+      const docRef = doc(db, 'postGameTrackers', user.uid);
       await setDoc(
         docRef,
         {
@@ -727,13 +786,15 @@ export default function ExploreAttackArsenalScreen() {
     }
   }
 
-  // ======= HANDLERS =======
+  // ========== HANDLERS ==========
   const handleCategoryChange = (cat) => {
+    console.log(`OffenseScreen: Category change initiated to: ${cat}`);
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 20, duration: 200, useNativeDriver: true }),
     ]).start(() => {
       setSelectedCategory(cat);
+      console.log(`OffenseScreen: Setting selected category to: ${cat}`);
       requestAnimationFrame(() => {
         fadeAnim.setValue(0);
         slideAnim.setValue(-20);
@@ -741,31 +802,40 @@ export default function ExploreAttackArsenalScreen() {
           Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
           Animated.timing(slideAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
         ]).start();
+        console.log("OffenseScreen: Animating category tab transition in.");
       });
     });
   };
 
   const handleCtaPressIn = () => {
+    console.log("OffenseScreen: CTA button press in animation started.");
     Animated.timing(ctaOpacity, { toValue: 0.5, duration: 200, useNativeDriver: true }).start();
   };
   const handleCtaPressOut = () => {
+    console.log("OffenseScreen: CTA button press out animation started.");
     Animated.timing(ctaOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
   };
 
   const handleGridPress = (item) => {
+    console.log(`OffenseScreen: Grid item pressed. Item ID: ${item.id}, Type: ${item.type}`);
     setSelectedItem(item);
+    console.log("OffenseScreen: Setting selected item.");
     setModalVisible(true);
+    console.log("OffenseScreen: Opening modal.");
   };
 
   const closeModal = () => {
+    console.log("OffenseScreen: Closing modal.");
     setModalVisible(false);
     setSelectedItem(null);
+    console.log("OffenseScreen: Resetting selected item.");
 
     // Reset pre-match
     setSelectedGameMode(null);
     setSelectedDivision(null);
     setShowPrematchTips(false);
     setPrematchDisplayedTips([]);
+    console.log("OffenseScreen: Resetting pre-match state.");
 
     // Reset mid-time
     setMidtimeStep(1);
@@ -773,6 +843,7 @@ export default function ExploreAttackArsenalScreen() {
     setMidtimeConcern(null);
     setShowMidtimeTips(false);
     setMidtimeDisplayedTips([]);
+    console.log("OffenseScreen: Resetting mid-time state.");
 
     // Reset post-game
     setPostgameStep(1);
@@ -784,6 +855,7 @@ export default function ExploreAttackArsenalScreen() {
       mentality: 0,
     });
     setShowPostgameSurveyComplete(false);
+    console.log("OffenseScreen: Resetting post-game state.");
   };
 
   // Container style
@@ -797,6 +869,7 @@ export default function ExploreAttackArsenalScreen() {
 
   // Grid item
   const InteractiveGridItem = React.memo(({ item }) => {
+    console.log(`OffenseScreen: Rendering InteractiveGridItem for ID: ${item.id}`);
     const opacityAnim = useRef(new Animated.Value(1)).current;
     const onPress = () => {
       Animated.sequence([
@@ -804,7 +877,9 @@ export default function ExploreAttackArsenalScreen() {
         Animated.timing(opacityAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
       ]).start(() => {
         handleGridPress(item);
+        console.log("OffenseScreen: Grid item press animation completed.");
       });
+      console.log("OffenseScreen: Grid item press animation started.");
     };
     const gridStyle = item.type === 'formation' ? styles.formationGridItem : styles.fullWidthGridItem;
     const finalUri = ensureHttps(item.preview?.uri) || '';
@@ -841,7 +916,7 @@ export default function ExploreAttackArsenalScreen() {
 
   function getCategoryData() {
     if (selectedCategory === 'tacticalVideos') return tacticalVideos;
-    if (selectedCategory === 'skillMoves') return [];
+    if (selectedCategory === 'skillMoves') return []; // Skill moves is handled by a direct component
     return gridData[selectedCategory] || [];
   }
 
@@ -862,7 +937,7 @@ export default function ExploreAttackArsenalScreen() {
     }
   }
 
-  // ======= RENDER =======
+  // ========== RENDER ==========
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
       <ImageBackground
@@ -917,16 +992,16 @@ export default function ExploreAttackArsenalScreen() {
                 style={styles.moreTipsButton}
                 onPress={() => router.push('screens/AllAttackingArticles')}
               >
-                <Text style={styles.moreTipsButtonText}>{t('offenseScreen.moreArticlesButton')}</Text> // MODIFIED: Translated 'More Articles'
+                <Text style={styles.moreTipsButtonText}>{t('offenseScreen.moreArticlesButton')}</Text> {/* MODIFIED: Translated 'More Articles' */}
               </TouchableOpacity>
             </View>
 
             {/* MAIN SECTION */}
             <View style={styles.mainSection}>
-              <Text style={styles.sectionHeader}>{t('offenseScreen.exploreAttackArsenalHeader')}</Text> // MODIFIED: Translated header
+              <Text style={styles.sectionHeader}>{t('offenseScreen.exploreAttackArsenalHeader')}</Text> {/* MODIFIED: Translated header */}
 
               {/* WRAP THE CATEGORY TABS SCROLLVIEW IN A VIEW 
-                WITH A RIGHT-SIDE LINEAR GRADIENT 
+                 WITH A RIGHT-SIDE LINEAR GRADIENT 
               */}
               <View style={styles.categoryTabsWrapper}>
                 <ScrollView
@@ -975,12 +1050,12 @@ export default function ExploreAttackArsenalScreen() {
                   selectedCategory === 'matchDayAssistant'
                     ? require('../../assets/images/Article bk.png')
                     : selectedCategory === 'formations'
-                    ? require('../../assets/images/formation.png')
-                    : selectedCategory === 'skillMoves'
-                    ? require('../../assets/images/skill moves.png')
-                    : selectedCategory === 'tacticalVideos'
-                    ? require('../../assets/images/tactical videos.png')
-                    : { uri: '' }
+                      ? require('../../assets/images/formation.png')
+                      : selectedCategory === 'skillMoves'
+                        ? require('../../assets/images/skill moves.png')
+                        : selectedCategory === 'tacticalVideos'
+                          ? require('../../assets/images/tactical videos.png')
+                          : { uri: '' }
                 }
                 style={[
                   styles.categoryContent,
@@ -1022,8 +1097,8 @@ export default function ExploreAttackArsenalScreen() {
                               selectedCategory === 'formations'
                                 ? '/screens/FormationsScreen'
                                 : selectedCategory === 'skillMoves'
-                                ? '/AllSkillMovesScreen'
-                                : '/screens/MoreVideos',
+                                  ? '/AllSkillMovesScreen'
+                                  : '/screens/MoreVideos',
                           })
                         }
                       >
@@ -1031,10 +1106,10 @@ export default function ExploreAttackArsenalScreen() {
                           {selectedCategory === 'formations'
                             ? t('offenseScreen.seeAllFormations')
                             : selectedCategory === 'skillMoves'
-                            ? t('offenseScreen.seeAllSkillMoves')
-                            : selectedCategory === 'tacticalVideos'
-                            ? t('offenseScreen.watchAllAttackingTutorials')
-                            : t('offenseScreen.viewAll')}
+                              ? t('offenseScreen.seeAllSkillMoves')
+                              : selectedCategory === 'tacticalVideos'
+                                ? t('offenseScreen.watchAllAttackingTutorials')
+                                : t('offenseScreen.viewAll')}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -1042,281 +1117,266 @@ export default function ExploreAttackArsenalScreen() {
                 )}
               </AnimatedImageBackground>
             </View>
-          </ScrollView>
 
-          {/* MODAL */}
-          <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={closeModal}>
-            <TouchableWithoutFeedback
-              onPress={() => {
-                if (selectedItem?.type !== 'tacticalVideo') closeModal();
-              }}
-            >
-              <View style={styles.modalBackground}>
-                <ScrollView contentContainerStyle={styles.modalScrollContainer}>
-                  <TouchableWithoutFeedback>
-                    <View style={styles.modalContainer}>
-                      <ImageBackground
-                        source={getModalBackground(selectedItem?.type)}
-                        style={styles.modalImageBg}
-                        imageStyle={{ borderRadius: 10, resizeMode: 'cover' }}
-                      >
-                        {selectedItem?.type === 'tacticalVideo' ? (
-                          <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>{selectedItem.title}</Text>
-                            <View style={styles.videoContainer}>
-                              {selectedItem.videoUrl ? (
-                                <WebView
-                                  source={{
-                                    uri: transformYoutubeUrl(ensureHttps(selectedItem.videoUrl), {
-                                      autoplay: 1,
-                                      mute: 1,
-                                    }),
-                                  }}
-                                  style={{ flex: 1 }}
-                                  javaScriptEnabled
-                                  allowsInlineMediaPlayback
-                                  mediaPlaybackRequiresUserAction={false}
-                                />
+            {/* MODAL */}
+            <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={closeModal}>
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  if (selectedItem?.type !== 'tacticalVideo') closeModal();
+                }}
+              >
+                <View style={styles.modalBackground}>
+                  <ScrollView contentContainerStyle={styles.modalScrollContainer}>
+                    <TouchableWithoutFeedback>
+                      <View style={styles.modalContainer}>
+                        <ImageBackground
+                          source={getModalBackground(selectedItem?.type)}
+                          style={styles.modalImageBg}
+                          imageStyle={{ borderRadius: 10, resizeMode: 'cover' }}
+                        >
+                          {selectedItem?.type === 'tacticalVideo' ? (
+                            <View style={styles.modalContent}>
+                              <Text style={styles.modalTitle}>{selectedItem.title}</Text>
+                              <View style={styles.videoContainer}>
+                                {selectedItem.videoUrl ? (
+                                  <WebView
+                                    source={{
+                                      uri: transformYoutubeUrl(ensureHttps(selectedItem.videoUrl), {
+                                        autoplay: 1,
+                                        mute: 1,
+                                      }),
+                                    }}
+                                    style={{ flex: 1 }}
+                                    javaScriptEnabled
+                                    allowsInlineMediaPlayback
+                                    mediaPlaybackRequiresUserAction={false}
+                                  />
+                                ) : (
+                                  <Text style={{ color: '#fff' }}>{t('offenseScreen.noVideoUrlProvided')}</Text> // MODIFIED: Translated message
+                                )}
+                              </View>
+                            </View>
+                          ) : selectedItem?.type === 'formation' ? (
+                            <View style={styles.modalContent}>
+                              <Text style={styles.modalTitle}>{selectedItem.title}</Text>
+                              <Text style={styles.modalText}>{selectedItem.description}</Text>
+                              <Text style={styles.modalSubheading}>{t('offenseScreen.modalPros')}</Text> {/* MODIFIED: Translated subheading */}
+                              <Text style={styles.modalText}>{selectedItem.pros}</Text>
+                              <Text style={styles.modalSubheading}>{t('offenseScreen.modalCons')}</Text> {/* MODIFIED: Translated subheading */}
+                              <Text style={styles.modalText}>{selectedItem.cons}</Text>
+                              <Text style={styles.modalSubheading}>{t('offenseScreen.modalBestFor')}</Text> {/* MODIFIED: Translated subheading */}
+                              <Text style={styles.modalText}>{selectedItem.recommended}</Text>
+                            </View>
+                          ) : selectedItem?.type === 'matchDayAssistantPrematch' ? (
+                            <View style={styles.modalContent}>
+                              <Text style={styles.modalTitle}>{t('offenseScreen.prematchHuddleTitle')}</Text> {/* MODIFIED: Translated title */}
+                              {!showPrematchTips ? (
+                                <>
+                                  {!selectedGameMode ? (
+                                    <>
+                                      <Text style={styles.highlightedQuestion}>
+                                        {t('offenseScreen.prematchGameModeQuestion')}
+                                      </Text> {/* MODIFIED: Translated question */}
+                                      <View style={styles.buttonGroupColumn}>
+                                        {[t('offenseScreen.gameModeUT'), t('offenseScreen.gameModeCareer'), t('offenseScreen.gameModeQuickKickOff'), t('offenseScreen.gameModeSeasons'), t('offenseScreen.gameModeRush')].map(
+                                          (mode) => (
+                                            <TouchableOpacity
+                                              key={mode}
+                                              onPress={() => {
+                                                setSelectedGameMode(mode);
+                                                if (mode !== t('offenseScreen.gameModeUT') && mode !== t('offenseScreen.gameModeSeasons')) {
+                                                  generatePrematchTips();
+                                                }
+                                              }}
+                                              style={styles.optionButton}
+                                            >
+                                              <Text style={styles.optionButtonText}>{mode}</Text>
+                                            </TouchableOpacity>
+                                          )
+                                        )}
+                                      </View>
+                                    </>
+                                  ) : (selectedGameMode === t('offenseScreen.gameModeUT') || selectedGameMode === t('offenseScreen.gameModeSeasons')) &&
+                                    !selectedDivision ? (
+                                    <>
+                                      <Text style={styles.highlightedQuestion}>
+                                        {t('offenseScreen.prematchDivisionQuestion')}
+                                      </Text> {/* MODIFIED: Translated question */}
+                                      <View style={styles.buttonGroupColumn}>
+                                        {[t('offenseScreen.division10_8'), t('offenseScreen.division7_5'), t('offenseScreen.division4_2'), t('offenseScreen.divisionElite')].map(
+                                          (div) => (
+                                            <TouchableOpacity
+                                              key={div}
+                                              onPress={() => {
+                                                setSelectedDivision(div);
+                                                generatePrematchTips();
+                                              }}
+                                              style={styles.optionButton}
+                                            >
+                                              <Text style={styles.optionButtonText}>{div}</Text>
+                                            </TouchableOpacity>
+                                          )
+                                        )}
+                                      </View>
+                                    </>
+                                  ) : null}
+                                </>
                               ) : (
-                                <Text style={{ color: '#fff' }}>{t('offenseScreen.noVideoUrlProvided')}</Text> // MODIFIED: Translated message
+                                <>
+                                  <Text style={styles.modalText}>{t('offenseScreen.hereAreYourTips')}</Text> {/* MODIFIED: Translated 'Here are your tips:' */}
+                                  {prematchDisplayedTips.map((tip, idx) => (
+                                    <View key={idx} style={styles.tipContainer}>
+                                      <Text style={styles.tipTitle}>{tip.text}</Text>
+                                    </View>
+                                  ))}
+                                  <TouchableOpacity
+                                    onPress={generatePrematchTips}
+                                    style={styles.showMoreButton}
+                                  >
+                                    <Text style={styles.showMoreButtonText}>{t('offenseScreen.show3More')}</Text> {/* MODIFIED: Translated 'Show 3 More' */}
+                                  </TouchableOpacity>
+                                </>
                               )}
                             </View>
-                          </View>
-                        ) : selectedItem?.type === 'formation' ? (
-                          <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>{selectedItem.title}</Text>
-                            <Text style={styles.modalText}>{selectedItem.description}</Text>
-                            <Text style={styles.modalSubheading}>{t('offenseScreen.modalPros')}</Text> // MODIFIED: Translated subheading
-                            <Text style={styles.modalText}>{selectedItem.pros}</Text>
-                            <Text style={styles.modalSubheading}>{t('offenseScreen.modalCons')}</Text> // MODIFIED: Translated subheading
-                            <Text style={styles.modalText}>{selectedItem.cons}</Text>
-                            <Text style={styles.modalSubheading}>{t('offenseScreen.modalBestFor')}</Text> // MODIFIED: Translated subheading
-                            <Text style={styles.modalText}>{selectedItem.recommended}</Text>
-                          </View>
-                        ) : selectedItem?.type === 'matchDayAssistantPrematch' ? (
-                          <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>{t('offenseScreen.prematchHuddleTitle')}</Text> // MODIFIED: Translated title
-                            {!showPrematchTips ? (
-                              <>
-                                {!selectedGameMode ? (
+                          ) : selectedItem?.type === 'matchDayAssistantMidtime' ? (
+                            <View style={styles.modalContent}>
+                              <Text style={styles.modalTitle}>{t('offenseScreen.midtimeCheckTitle')}</Text> {/* MODIFIED: Translated title */}
+                              {!showMidtimeTips ? (
+                                midtimeStep === 1 ? (
                                   <>
                                     <Text style={styles.highlightedQuestion}>
-                                      {t('offenseScreen.prematchGameModeQuestion')}
-                                    </Text> // MODIFIED: Translated question
+                                      {t('offenseScreen.midtimePerformanceQuestion')}
+                                    </Text> {/* MODIFIED: Translated question */}
                                     <View style={styles.buttonGroupColumn}>
-                                      {[t('offenseScreen.gameModeUT'), t('offenseScreen.gameModeCareer'), t('offenseScreen.gameModeQuickKickOff'), t('offenseScreen.gameModeSeasons'), t('offenseScreen.gameModeRush')].map(
-                                        (mode) => (
+                                      {[t('offenseScreen.dominating'), t('offenseScreen.good'), t('offenseScreen.even'), t('offenseScreen.struggling')].map(
+                                        (option) => (
                                           <TouchableOpacity
-                                            key={mode}
+                                            key={option}
                                             onPress={() => {
-                                              setSelectedGameMode(mode);
-                                              if (mode !== t('offenseScreen.gameModeUT') && mode !== t('offenseScreen.gameModeSeasons')) {
-                                                generatePrematchTips();
-                                              }
+                                              setMidtimePerformance(option);
+                                              setMidtimeStep(2);
                                             }}
                                             style={styles.optionButton}
                                           >
-                                            <Text style={styles.optionButtonText}>{mode}</Text>
+                                            <Text style={styles.optionButtonText}>{option}</Text>
                                           </TouchableOpacity>
                                         )
                                       )}
                                     </View>
                                   </>
-                                ) : (selectedGameMode === t('offenseScreen.gameModeUT') || selectedGameMode === t('offenseScreen.gameModeSeasons')) &&
-                                  !selectedDivision ? (
+                                ) : (
                                   <>
                                     <Text style={styles.highlightedQuestion}>
-                                      {t('offenseScreen.prematchDivisionQuestion')}
-                                    </Text> // MODIFIED: Translated question
+                                      {t('offenseScreen.midtimeConcernQuestion')}
+                                    </Text> {/* MODIFIED: Translated question */}
                                     <View style={styles.buttonGroupColumn}>
-                                      {[t('offenseScreen.division10_8'), t('offenseScreen.division7_5'), t('offenseScreen.division4_2'), t('offenseScreen.divisionElite')].map(
-                                        (div) => (
-                                          <TouchableOpacity
-                                            key={div}
-                                            onPress={() => {
-                                              setSelectedDivision(div);
-                                              generatePrematchTips();
-                                            }}
-                                            style={styles.optionButton}
-                                          >
-                                            <Text style={styles.optionButtonText}>{div}</Text>
-                                          </TouchableOpacity>
-                                        )
-                                      )}
+                                      {[
+                                        t('offenseScreen.defense'),
+                                        t('offenseScreen.finishing'),
+                                        t('offenseScreen.possession'),
+                                        t('offenseScreen.staminaFatigue'),
+                                      ].map((concern) => (
+                                        <TouchableOpacity
+                                          key={concern}
+                                          onPress={() => {
+                                            setMidtimeConcern(concern);
+                                            generateMidtimeTips();
+                                          }}
+                                          style={styles.optionButton}
+                                        >
+                                          <Text style={styles.optionButtonText}>{concern}</Text>
+                                        </TouchableOpacity>
+                                      ))}
                                     </View>
                                   </>
-                                ) : null}
-
-                                {showPrematchTips && (
-                                  <View>
-                                    <Text style={styles.modalText}>{t('offenseScreen.hereAreYourTips')}</Text> // MODIFIED: Translated 'Here are your tips:'
-                                    {prematchDisplayedTips.map((tip, idx) => (
-                                      <View key={idx} style={styles.tipContainer}>
-                                        <Text style={styles.tipTitle}>{tip.text}</Text>
-                                      </View>
-                                    ))}
-                                    <TouchableOpacity
-                                      onPress={generatePrematchTips}
-                                      style={styles.showMoreButton}
-                                    >
-                                      <Text style={styles.showMoreButtonText}>{t('offenseScreen.show3More')}</Text> // MODIFIED: Translated 'Show 3 More'
-                                    </TouchableOpacity>
-                                  </View>
-                                )}
-                              </>
-                            ) : (
-                              <View>
-                                <Text style={styles.modalText}>{t('offenseScreen.hereAreYourTips')}</Text> // MODIFIED: Translated 'Here are your tips:'
-                                {prematchDisplayedTips.map((tip, idx) => (
-                                  <View key={idx} style={styles.tipContainer}>
-                                    <Text style={styles.tipTitle}>{tip.text}</Text>
-                                  </View>
-                                ))}
-                                <TouchableOpacity
-                                  onPress={generatePrematchTips}
-                                  style={styles.showMoreButton}
-                                >
-                                  <Text style={styles.showMoreButtonText}>{t('offenseScreen.show3More')}</Text> // MODIFIED: Translated 'Show 3 More'
-                                </TouchableOpacity>
-                              </View>
-                            )}
-                          </View>
-                        ) : selectedItem?.type === 'matchDayAssistantMidtime' ? (
-                          <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>{t('offenseScreen.midtimeCheckTitle')}</Text> // MODIFIED: Translated title
-                            {!showMidtimeTips ? (
-                              midtimeStep === 1 ? (
-                                <>
-                                  <Text style={styles.highlightedQuestion}>
-                                    {t('offenseScreen.midtimePerformanceQuestion')}
-                                  </Text> // MODIFIED: Translated question
-                                  <View style={styles.buttonGroupColumn}>
-                                    {[t('offenseScreen.dominating'), t('offenseScreen.good'), t('offenseScreen.even'), t('offenseScreen.struggling')].map((option) => (
-                                      <TouchableOpacity
-                                        key={option}
-                                        onPress={() => {
-                                          setMidtimePerformance(option);
-                                          setMidtimeStep(2);
-                                        }}
-                                        style={styles.optionButton}
-                                      >
-                                        <Text style={styles.optionButtonText}>{option}</Text>
-                                      </TouchableOpacity>
-                                    ))}
-                                  </View>
-                                </>
+                                )
                               ) : (
                                 <>
-                                  <Text style={styles.highlightedQuestion}>
-                                    {t('offenseScreen.midtimeConcernQuestion')}
-                                  </Text> // MODIFIED: Translated question
-                                  <View style={styles.buttonGroupColumn}>
-                                    {[
-                                      t('offenseScreen.defense'),
-                                      t('offenseScreen.finishing'),
-                                      t('offenseScreen.possession'),
-                                      t('offenseScreen.staminaFatigue'),
-                                    ].map((concern) => (
-                                      <TouchableOpacity
-                                        key={concern}
-                                        onPress={() => {
-                                          setMidtimeConcern(concern);
-                                          generateMidtimeTips();
-                                        }}
-                                        style={styles.optionButton}
-                                      >
-                                        <Text style={styles.optionButtonText}>{concern}</Text>
-                                      </TouchableOpacity>
-                                    ))}
-                                  </View>
+                                  <Text style={styles.modalText}>{t('offenseScreen.hereAreYourTips')}</Text> {/* MODIFIED: Translated 'Here are your tips:' */}
+                                  {midtimeDisplayedTips.map((tip, idx) => (
+                                    <View key={idx} style={styles.tipContainer}>
+                                      <Text style={styles.tipTitle}>{tip}</Text>
+                                    </View>
+                                  ))}
                                 </>
-                              )
-                            ) : (
-                              <View>
-                                <Text style={styles.modalText}>{t('offenseScreen.hereAreYourTips')}</Text> // MODIFIED: Translated 'Here are your tips:'
-                                {midtimeDisplayedTips.map((tip, idx) => (
-                                  <View key={idx} style={styles.tipContainer}>
-                                    <Text style={styles.tipTitle}>{tip}</Text>
-                                  </View>
-                                ))}
-                              </View>
-                            )}
-                          </View>
-                        ) : selectedItem?.type === 'matchDayAssistantPostgame' ? (
-                          <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>{t('offenseScreen.postgameReflectionTitle')}</Text> // MODIFIED: Translated title
-                            <View style={styles.progressBarContainer}>
-                              <Text style={styles.progressLabel}>
-                                {t('offenseScreen.postGameProgress', { progress: postgameProgress, total: 100 })}
-                              </Text> // MODIFIED: Translated progress label
-                              <View style={styles.progressBarOuter}>
-                                <View
-                                  style={[
-                                    styles.progressBarInner,
-                                    { width: `${(postgameProgress / 100) * 100}%` },
-                                  ]}
-                                />
-                              </View>
-                              <TouchableOpacity
-                                onPress={() =>
-                                  Alert.alert(
-                                    t('common.info'), // MODIFIED: Translated 'Info'
-                                    t('offenseScreen.postGameInfoAlert') // MODIFIED: Translated alert message
-                                  )
-                                }
-                              >
-                                <Text style={styles.questionMark}>?</Text>
-                              </TouchableOpacity>
+                              )}
                             </View>
-                            {postgameStep <= 5 && (
-                              <Text style={styles.highlightedQuestion}>
-                                {getPostGameQuestionTitle(postgameStep)}
-                              </Text>
-                            )}
-                            {showPostgameSurveyComplete ? (
-                              <View>
-                                <Text style={styles.modalText}>
-                                  {t('offenseScreen.surveyComplete')}
-                                </Text> // MODIFIED: Translated message
-                                <Text style={styles.modalText}>
-                                  {t('offenseScreen.currentCheckins', { progress: postgameProgress, total: 100 })}
-                                </Text> // MODIFIED: Translated message
+                          ) : selectedItem?.type === 'matchDayAssistantPostgame' ? (
+                            <View style={styles.modalContent}>
+                              <Text style={styles.modalTitle}>{t('offenseScreen.postgameReflectionTitle')}</Text> {/* MODIFIED: Translated title */}
+                              <View style={styles.progressBarContainer}>
+                                <Text style={styles.progressLabel}>
+                                  {t('offenseScreen.postGameProgress', { progress: postgameProgress, total: 100 })}
+                                </Text> {/* MODIFIED: Translated progress label */}
+                                <View style={styles.progressBarOuter}>
+                                  <View
+                                    style={[
+                                      styles.progressBarInner,
+                                      { width: `${(postgameProgress / 100) * 100}%` },
+                                    ]}
+                                  />
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    Alert.alert(
+                                      t('common.info'), // MODIFIED: Translated 'Info'
+                                      t('offenseScreen.postGameInfoAlert') // MODIFIED: Translated alert message
+                                    )
+                                  }
+                                >
+                                  <Text style={styles.questionMark}>?</Text>
+                                </TouchableOpacity>
                               </View>
-                            ) : (
-                              <View>
-                                {postgameStep <= 5 && (
-                                  <View style={styles.buttonGroupColumn}>
-                                    {postGameOptions[postgameStep].map((option) => (
-                                      <TouchableOpacity
-                                        key={option.label}
-                                        style={styles.optionButton}
-                                        onPress={() => handlePostGameAnswer(option.rating)}
-                                      >
-                                        <Text style={styles.optionButtonText}>{option.label}</Text>
-                                      </TouchableOpacity>
-                                    ))}
-                                  </View>
-                                )}
-                              </View>
-                            )}
-                          </View>
-                        ) : (
-                          <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>{selectedItem?.title}</Text>
-                            <Text style={styles.modalText}>{t('offenseScreen.noAdditionalDetails')}</Text> // MODIFIED: Translated message
-                          </View>
-                        )}
+                              {postgameStep <= 5 && (
+                                <Text style={styles.highlightedQuestion}>
+                                  {getPostGameQuestionTitle(postgameStep)}
+                                </Text>
+                              )}
+                              {showPostgameSurveyComplete ? (
+                                <View>
+                                  <Text style={styles.modalText}>
+                                    {t('offenseScreen.surveyComplete')}
+                                  </Text> {/* MODIFIED: Translated message */}
+                                  <Text style={styles.modalText}>
+                                    {t('offenseScreen.currentCheckins', { progress: postgameProgress, total: 100 })}
+                                  </Text> {/* MODIFIED: Translated message */}
+                                </View>
+                              ) : (
+                                <View>
+                                  {postgameStep <= 5 && (
+                                    <View style={styles.buttonGroupColumn}>
+                                      {postGameOptions[postgameStep].map((option) => (
+                                        <TouchableOpacity
+                                          key={option.label}
+                                          style={styles.optionButton}
+                                          onPress={() => handlePostGameAnswer(option.rating)}
+                                        >
+                                          <Text style={styles.optionButtonText}>{option.label}</Text>
+                                        </TouchableOpacity>
+                                      ))}
+                                    </View>
+                                  )}
+                                </View>
+                              )}
+                            </View>
+                          ) : (
+                            <View style={styles.modalContent}>
+                              <Text style={styles.modalTitle}>{selectedItem?.title}</Text>
+                              <Text style={styles.modalText}>{t('offenseScreen.noAdditionalDetails')}</Text> // MODIFIED: Translated message
+                            </View>
+                          )}
 
-                        <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                          <Text style={styles.closeButtonText}>{t('common.closeButton')}</Text> // MODIFIED: Translated 'CLOSE'
-                        </TouchableOpacity>
-                      </ImageBackground>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </ScrollView>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
+                          <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                            <Text style={styles.closeButtonText}>{t('common.closeButton')}</Text> {/* MODIFIED: Translated 'CLOSE' */}
+                          </TouchableOpacity>
+                        </ImageBackground>
+                      </View>
+                    </TouchableWithoutFeedback>
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </Modal>
+          </ScrollView>
         </View>
       </ImageBackground>
     </SafeAreaView>
@@ -1431,8 +1491,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: 10,
   },
-  /* The category tabs plus gradient 
-  */
+  /* The category tabs plus gradient */
   categoryTabsWrapper: {
     position: 'relative',
     marginBottom: 15,
@@ -1446,7 +1505,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     width: 40,
-    // pointerEvents so it won't block taps on the scrollview
+    // pointerEvents so it won't block tabs on the scrollview
     pointerEvents: 'none',
   },
   categoryTabBackground: {
@@ -1689,7 +1748,7 @@ const styles = StyleSheet.create({
   },
   progressBarInner: {
     height: '100%',
-    backgroundColor: '#00FFBF',
+    backgroundColor: '#00FFBC',
   },
   questionMark: {
     fontSize: 12,
