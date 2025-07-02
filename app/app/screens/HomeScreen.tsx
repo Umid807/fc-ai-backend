@@ -16,7 +16,7 @@ import {
   Pressable,
   ActivityIndicator,
   Platform,
-
+  
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -53,23 +53,17 @@ import * as Notifications from 'expo-notifications';
 import RewardPopup from '../../components/RewardPopup';
 import { useTranslation } from 'react-i18next';
 import NetInfo from '@react-native-community/netinfo';
-
 // Prevent auto-hide splash screen
-SplashScreen.preventAutoHideAsync().catch(() => { });
-console.log("HomeScreen: SplashScreen auto-hide prevented.");
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Configure notifications
 Notifications.setNotificationHandler({
-  handleNotification: async () => {
-    console.log("HomeScreen: Notification received. Handling notification.");
-    return ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    });
-  },
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
 });
-console.log("HomeScreen: Notification handler configured.");
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -77,7 +71,6 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const DAILY_REWARD_AMOUNT = 50;
 const AI_QUESTION_COST = 200;
 const FREE_QUESTIONS_LIMIT = 3;
-console.log("HomeScreen: Constants initialized (DAILY_REWARD_AMOUNT, AI_QUESTION_COST, FREE_QUESTIONS_LIMIT).");
 
 interface HeroCard {
   id: string;
@@ -121,25 +114,22 @@ class ErrorBoundary extends React.Component<
   constructor(props: any) {
     super(props);
     this.state = { hasError: false };
-    console.log("ErrorBoundary: Component initialized.");
   }
 
   static getDerivedStateFromError(error: Error) {
-    console.log("ErrorBoundary: Error detected by getDerivedStateFromError:", error.message);
     return { hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('HomeScreen ErrorBoundary: Caught an error:', error, errorInfo);
+    console.error('HomeScreen Error:', error, errorInfo);
     // Here you can log to Firebase Analytics or crash reporting
   }
 
   render() {
     if (this.state.hasError) {
-      console.log("ErrorBoundary: Rendering fallback UI.");
       return this.props.fallback || (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Oops! Something went wrong! Please restart the app.</Text>
+          <Text style={styles.errorText}>⚽ Something went wrong! Please restart the app.</Text>
         </View>
       );
     }
@@ -149,9 +139,9 @@ class ErrorBoundary extends React.Component<
 }
 
 // Enhanced FadeTouchable with accessibility
-const FadeTouchable = React.memo(({
-  onPress,
-  style,
+const FadeTouchable = React.memo(({ 
+  onPress, 
+  style, 
   children,
   disabled = false,
   accessibilityLabel,
@@ -164,33 +154,30 @@ const FadeTouchable = React.memo(({
   accessibilityLabel?: string;
   accessibilityHint?: string;
 }) => {
-  console.log("FadeTouchable: Component rendered.");
   const opacity = useRef(new Animated.Value(1)).current;
-
+  
   const handlePressIn = useCallback(() => {
     if (disabled) return;
-    console.log("FadeTouchable: PressIn detected.");
     Animated.timing(opacity, {
       toValue: 0.6,
       duration: 150,
       useNativeDriver: true,
     }).start();
   }, [disabled, opacity]);
-
+  
   const handlePressOut = useCallback(() => {
     if (disabled) return;
-    console.log("FadeTouchable: PressOut detected.");
     Animated.timing(opacity, {
       toValue: 1,
       duration: 150,
       useNativeDriver: true,
     }).start();
   }, [disabled, opacity]);
-
+  
   return (
-    <Pressable
-      onPress={disabled ? undefined : onPress}
-      onPressIn={handlePressIn}
+    <Pressable 
+      onPress={disabled ? undefined : onPress} 
+      onPressIn={handlePressIn} 
       onPressOut={handlePressOut}
       style={disabled ? [style, { opacity: 0.5 }] : style}
       accessibilityLabel={accessibilityLabel}
@@ -205,48 +192,38 @@ const FadeTouchable = React.memo(({
 });
 
 // Loading Skeleton Components
-const HeroCardSkeleton = () => {
-  console.log("HeroCardSkeleton: Component rendered.");
-  return (
-    <View style={styles.heroCardSkeleton}>
-      <View style={styles.heroCardSkeletonImage} />
-      <View style={styles.heroCardSkeletonText}>
-        <View style={styles.heroCardSkeletonTitle} />
-        <View style={styles.heroCardSkeletonSubtitle} />
-      </View>
+const HeroCardSkeleton = () => (
+  <View style={styles.heroCardSkeleton}>
+    <View style={styles.heroCardSkeletonImage} />
+    <View style={styles.heroCardSkeletonText}>
+      <View style={styles.heroCardSkeletonTitle} />
+      <View style={styles.heroCardSkeletonSubtitle} />
     </View>
-  );
-};
+  </View>
+);
 
-const VideoCardSkeleton = ({ index }: { index: number }) => {
-  console.log(`VideoCardSkeleton: Component rendered for index ${index}.`);
-  return (
-    <View style={[
-      styles.videoCardSkeleton,
-      index === 0 && styles.videoCard1,
-      index === 1 && styles.videoCard2,
-      index === 2 && styles.videoCard3,
-    ]}>
-      <View style={styles.videoSkeletonImage} />
-      <View style={styles.videoSkeletonText} />
-    </View>
-  );
-};
+const VideoCardSkeleton = ({ index }: { index: number }) => (
+  <View style={[
+    styles.videoCardSkeleton,
+    index === 0 && styles.videoCard1,
+    index === 1 && styles.videoCard2,
+    index === 2 && styles.videoCard3,
+  ]}>
+    <View style={styles.videoSkeletonImage} />
+    <View style={styles.videoSkeletonText} />
+  </View>
+);
 
 // Offline Banner Component
 const OfflineBanner = ({ isVisible }: { isVisible: boolean }) => {
   const slideAnim = useRef(new Animated.Value(-100)).current;
-  console.log("OfflineBanner: Component rendered. isVisible:", isVisible);
 
   useEffect(() => {
-    console.log("OfflineBanner: useEffect triggered. isVisible:", isVisible);
     Animated.timing(slideAnim, {
       toValue: isVisible ? 0 : -100,
       duration: 300,
       useNativeDriver: true,
-    }).start(() => {
-      console.log(`OfflineBanner: Animation ${isVisible ? 'shown' : 'hidden'}.`);
-    });
+    }).start();
   }, [isVisible, slideAnim]);
 
   return (
@@ -258,101 +235,64 @@ const OfflineBanner = ({ isVisible }: { isVisible: boolean }) => {
 };
 
 // VIP Badge Component
-const VIPBadge = () => {
-  console.log("VIPBadge: Component rendered.");
-  return (
-    <LinearGradient
-      colors={['#FFD700', '#FFA500', '#FF8C00']}
-      style={styles.vipBadge}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
-      <Crown size={12} color="#000" />
-      <Text style={styles.vipBadgeText}>VIP</Text>
-      <Star size={10} color="#000" />
-    </LinearGradient>
-  );
-};
+const VIPBadge = () => (
+  <LinearGradient
+    colors={['#FFD700', '#FFA500', '#FF8C00']}
+    style={styles.vipBadge}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }}
+  >
+    <Crown size={12} color="#000" />
+    <Text style={styles.vipBadgeText}>VIP</Text>
+    <Star size={10} color="#000" />
+  </LinearGradient>
+);
 
 export default function HomePage() {
-  console.log("HomePage: Component mounted.");
   const { t } = useTranslation();
   const router = useRouter();
-  console.log("HomePage: Router initialized.");
-
+  
   // State Management
   const [coins, setCoins] = useState<number>(0);
-  console.log("HomePage: State 'coins' initialized to 0.");
   const [dailyRewardClaimed, setDailyRewardClaimed] = useState(false);
-  console.log("HomePage: State 'dailyRewardClaimed' initialized to false.");
   const [dailyRewardCountdownState, setDailyRewardCountdownState] = useState("00:00:00");
-  console.log("HomePage: State 'dailyRewardCountdownState' initialized to '00:00:00'.");
   const [trickCountdown, setTrickCountdown] = useState("00:00:00");
-  console.log("HomePage: State 'trickCountdown' initialized to '00:00:00'.");
   const [username, setUsername] = useState(t('home.defaultUsername'));
-  console.log("HomePage: State 'username' initialized to default.");
   const [dataLoaded, setDataLoaded] = useState(false);
-  console.log("HomePage: State 'dataLoaded' initialized to false.");
   const [academyVisible, setAcademyVisible] = useState(false);
-  console.log("HomePage: State 'academyVisible' initialized to false.");
   const [loading, setLoading] = useState(false);
-  console.log("HomePage: State 'loading' initialized to false (for AI chat).");
   const [pageLoading, setPageLoading] = useState(true);
-  console.log("HomePage: State 'pageLoading' initialized to true.");
   const [isOnline, setIsOnline] = useState(true);
-  console.log("HomePage: State 'isOnline' initialized to true.");
 
   // AI Section State
   const [remainingQuestions, setRemainingQuestions] = useState(FREE_QUESTIONS_LIMIT);
-  console.log("HomePage: State 'remainingQuestions' initialized to FREE_QUESTIONS_LIMIT.");
   const [question, setQuestion] = useState('');
-  console.log("HomePage: State 'question' initialized to empty string.");
   const [answer, setAnswer] = useState('');
-  console.log("HomePage: State 'answer' initialized to empty string.");
   const [isVIP, setIsVIP] = useState(false);
-  console.log("HomePage: State 'isVIP' initialized to false.");
   const [shortAnswer, setShortAnswer] = useState("");
-  console.log("HomePage: State 'shortAnswer' initialized to empty string.");
   const [fullAnswer, setFullAnswer] = useState("");
-  console.log("HomePage: State 'fullAnswer' initialized to empty string.");
   const [inputHeight, setInputHeight] = useState(40);
-  console.log("HomePage: State 'inputHeight' initialized to 40.");
 
   // Challenge State
   const [dailyChallengeCoins, setDailyChallengeCoins] = useState(0);
-  console.log("HomePage: State 'dailyChallengeCoins' initialized to 0.");
-
+  
   // Animation References
   const progressAnim = useRef(new Animated.Value(0)).current;
-  console.log("HomePage: Ref 'progressAnim' initialized.");
   const scrollX = useRef(new Animated.Value(0)).current;
-  console.log("HomePage: Ref 'scrollX' initialized.");
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  console.log("HomePage: Ref 'pulseAnim' initialized.");
   const coinOpacity = useRef(new Animated.Value(0)).current;
-  console.log("HomePage: Ref 'coinOpacity' initialized.");
   const didYouKnowTextOpacity = useRef(new Animated.Value(1)).current;
-  console.log("HomePage: Ref 'didYouKnowTextOpacity' initialized.");
 
   // Modal and UI State
   const [videoModalVisible, setVideoModalVisible] = useState(false);
-  console.log("HomePage: State 'videoModalVisible' initialized to false.");
   const [selectedVideoUrl, setSelectedVideoUrl] = useState('');
-  console.log("HomePage: State 'selectedVideoUrl' initialized to empty string.");
   const [homeVideos, setHomeVideos] = useState<Video[]>([]);
-  console.log("HomePage: State 'homeVideos' initialized to empty array.");
   const [heroCards, setHeroCards] = useState<HeroCard[]>([]);
-  console.log("HomePage: State 'heroCards' initialized to empty array.");
   const [showCoinDrop, setShowCoinDrop] = useState(false);
-  console.log("HomePage: State 'showCoinDrop' initialized to false.");
   const [showRewardPopup, setShowRewardPopup] = useState(false);
-  console.log("HomePage: State 'showRewardPopup' initialized to false.");
   const [isSubscribedToNotifications, setIsSubscribedToNotifications] = useState(false);
-  console.log("HomePage: State 'isSubscribedToNotifications' initialized to false.");
   const [heroLoading, setHeroLoading] = useState(true);
-  console.log("HomePage: State 'heroLoading' initialized to true.");
   const [videosLoading, setVideosLoading] = useState(true);
-  console.log("HomePage: State 'videosLoading' initialized to true.");
 
   // Did You Know Section
   const didYouKnowTipKeys = useMemo(() => [
@@ -364,106 +304,82 @@ export default function HomePage() {
     'home.didYouKnow.tip6',
   ], []);
   const [currentDidYouKnowIndex, setCurrentDidYouKnowIndex] = useState(0);
-  console.log("HomePage: State 'currentDidYouKnowIndex' initialized to 0.");
 
   // Cleanup function for timers and animations
   const cleanupRef = useRef<(() => void)[]>([]);
-  console.log("HomePage: Ref 'cleanupRef' initialized.");
 
   const addCleanup = useCallback((cleanup: () => void) => {
     cleanupRef.current.push(cleanup);
-    console.log("HomePage: Cleanup function added to queue.");
   }, []);
 
   // Enhanced timezone handling with DST support
   const getNextFridayEST = useCallback(() => {
-    console.log("HomePage: getNextFridayEST called.");
     const now = new Date();
-
-    // Determine if we're in EDT (Daylight Saving) or EST (Standard)
+    
+    // Determine if we're in EDT (daylight time) or EST (standard time)
     const isDST = (date: Date) => {
       const jan = new Date(date.getFullYear(), 0, 1);
       const jul = new Date(date.getFullYear(), 6, 1);
       return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset()) !== date.getTimezoneOffset();
     };
-
+    
     const estOffset = isDST(now) ? -4 : -5; // EDT: UTC-4, EST: UTC-5
-    console.log(`HomePage: Current timezone offset for EST/EDT is ${estOffset} hours.`);
     const nowEST = new Date(now.getTime() + (estOffset * 60 * 60 * 1000));
-    console.log("HomePage: Current time converted to EST/EDT:", nowEST.toISOString());
-
+    
     let nextFriday = new Date(nowEST);
     const daysUntilFriday = (5 - nowEST.getDay() + 7) % 7;
-    console.log(`HomePage: Days until next Friday: ${daysUntilFriday}.`);
-
+    
     if (daysUntilFriday === 0) {
-      // It's Friday - check if it's before 8 PM EST/EDT
+      // It's Friday - check if it's before 8 PM
       if (nowEST.getHours() >= 20) {
-        console.log("HomePage: It's Friday after 8 PM, scheduling for next week.");
         nextFriday.setDate(nextFriday.getDate() + 7);
-      } else {
-        console.log("HomePage: It's Friday before 8 PM.");
       }
     } else {
       nextFriday.setDate(nextFriday.getDate() + daysUntilFriday);
-      console.log(`HomePage: Set date to next Friday: ${nextFriday.toDateString()}.`);
     }
-
-    nextFriday.setHours(20, 0, 0, 0); // Set to 8 PM EST/EDT
-    console.log("HomePage: Next Friday 8 PM EST/EDT calculated:", nextFriday.toISOString());
-    return new Date(nextFriday.getTime() - (estOffset * 60 * 60 * 1000)); // Convert back to local time for scheduling
+    
+    nextFriday.setHours(20, 0, 0, 0);
+    return new Date(nextFriday.getTime() - (estOffset * 60 * 60 * 1000));
   }, []);
 
   // Biweekly AI question reset (every other Monday)
   const shouldResetAIQuestions = useCallback((userData: UserData) => {
-    console.log("HomePage: shouldResetAIQuestions called for user data.");
     const now = new Date();
-    const lastReset = userData.lastAIQuestionReset?.toDate?.() ??
+    const lastReset = userData.lastAIQuestionReset?.toDate?.() ?? 
       (userData.lastAIQuestionReset ? new Date(userData.lastAIQuestionReset) : null);
-    console.log("HomePage: Last AI question reset date:", lastReset?.toISOString() || "N/A");
-
-    if (!lastReset) {
-      console.log("HomePage: No last reset date found, returning true for reset.");
-      return true; // First time, reset
-    }
-
+    
+    if (!lastReset) return true; // First time, reset
+    
     const daysSinceReset = Math.floor((now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24));
-    console.log(`HomePage: Days since last AI question reset: ${daysSinceReset}.`);
-
+    
     // Check if it's been at least 14 days and it's Monday
-    if (daysSinceReset >= 14 && now.getDay() === 1) { // Monday is 1
+    if (daysSinceReset >= 14 && now.getDay() === 1) {
       const currentMondayStart = new Date(now);
       currentMondayStart.setHours(0, 0, 0, 0);
+      
       const lastResetMondayStart = new Date(lastReset);
       lastResetMondayStart.setHours(0, 0, 0, 0);
-
-      const resetNeeded = currentMondayStart.getTime() !== lastResetMondayStart.getTime();
-      console.log("HomePage: Reset needed (>=14 days & Monday):", resetNeeded);
-      return resetNeeded;
+      
+      return currentMondayStart.getTime() !== lastResetMondayStart.getTime();
     }
-
-    console.log("HomePage: No AI question reset needed.");
+    
     return false;
   }, []);
 
   // Enhanced notification handler with iOS/Android support
   const handleNotifyMe = useCallback(async () => {
-    console.log("HomePage: handleNotifyMe called.");
     try {
       const auth = getAuth();
       const user = auth.currentUser;
-      console.log("HomePage: Current user:", user?.uid || "None");
-
+      
       if (!user) {
         Alert.alert(t('home.errorTitle'), t('home.userNotSignedIn'));
-        console.log("HomePage: Notification setup failed: User not signed in.");
         return;
       }
 
       // Enhanced permission request for both platforms
       let permissionResult;
       if (Platform.OS === 'ios') {
-        console.log("HomePage: Requesting iOS notification permissions.");
         permissionResult = await Notifications.requestPermissionsAsync({
           ios: {
             allowAlert: true,
@@ -473,7 +389,6 @@ export default function HomePage() {
           },
         });
       } else {
-        console.log("HomePage: Requesting Android notification permissions.");
         permissionResult = await Notifications.requestPermissionsAsync({
           android: {
             allowAlert: true,
@@ -482,41 +397,33 @@ export default function HomePage() {
           },
         });
       }
-      console.log("HomePage: Notification permission status:", permissionResult.status);
-
+      
       if (permissionResult.status !== 'granted') {
         Alert.alert(
-          '🚨 Permission Required',
-          'Enable notifications to get reminded about the weekly raffle! 🏆'
+          '🔔 Permission Required', 
+          'Enable notifications to get reminded about the weekly raffle! ⚽'
         );
-        console.log("HomePage: Notification permission not granted.");
         return;
       }
 
       const db = getFirestore();
       const userDocRef = doc(db, "users", user.uid);
-      console.log("HomePage: User document reference:", userDocRef.path);
-
+      
       // Cancel existing notification if any
       if (isSubscribedToNotifications) {
-        console.log("HomePage: User is currently subscribed to notifications. Attempting to cancel existing.");
         const userData = (await getDoc(userDocRef)).data() as UserData;
         if (userData.raffleNotificationId) {
           await Notifications.cancelScheduledNotificationAsync(userData.raffleNotificationId);
-          console.log(`HomeScreen: Canceled existing notification with ID: ${userData.raffleNotificationId}`);
-        } else {
-          console.log("HomeScreen: No existing notification ID found to cancel.");
         }
       }
-
+      
       const nextFridayEST = getNextFridayEST();
-      const notificationTime = new Date(nextFridayEST.getTime() - (30 * 60 * 1000)); // 30 mins before 8 PM
-      console.log("HomePage: Scheduling notification for:", notificationTime.toISOString());
-
+      const notificationTime = new Date(nextFridayEST.getTime() - (30 * 60 * 1000));
+      
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
-          title: "🏆 FC25 Weekly Raffle!",
-          body: "⏳ 30 minutes left to join! Don't miss your chance to win big!",
+          title: "⚽ FC25 Weekly Raffle!",
+          body: "🎰 30 minutes left to join! Don't miss your chance to win big!",
           sound: true,
           badge: 1,
           ...(Platform.OS === 'android' && {
@@ -529,136 +436,103 @@ export default function HomePage() {
         },
         trigger: { date: notificationTime },
       });
-      console.log("HomePage: Notification scheduled with ID:", notificationId);
 
       await updateDoc(userDocRef, {
         raffleNotificationId: notificationId,
         raffleNotificationEnabled: true,
         lastNotificationScheduled: new Date(),
       });
-      console.log("HomePage: Firestore updated with new notification ID and status.");
-      setIsSubscribedToNotifications(true);
-      console.log("HomePage: State 'isSubscribedToNotifications' set to true.");
 
+      setIsSubscribedToNotifications(true);
+      
       Alert.alert(
-        '🎉 You\'re in the game!',
-        `We'll remind you 30 minutes before kickoff!\n🏆 ${nextFridayEST.toLocaleDateString()} at ${nextFridayEST.toLocaleTimeString()}`
+        '🔔 You\'re in the game!', 
+        `We'll remind you 30 minutes before kickoff!\n⚽ ${nextFridayEST.toLocaleDateString()} at ${nextFridayEST.toLocaleTimeString()}`
       );
+
     } catch (error) {
-      console.error('HomePage: Notification setup error:', error);
-      Alert.alert('❌ Oops!', 'Could not set up notifications. Please try again!');
+      console.error('Notification setup error:', error);
+      Alert.alert('⚽ Oops!', 'Could not set up notifications. Please try again!');
     }
   }, [t, getNextFridayEST, isSubscribedToNotifications]);
 
   // Network status monitoring
   useEffect(() => {
-    console.log("HomePage: Network status useEffect triggered.");
     const unsubscribe = NetInfo.addEventListener(state => {
-      console.log("HomePage: Network status changed. isConnected:", state.isConnected);
       setIsOnline(state.isConnected ?? true);
-      console.log("HomePage: State 'isOnline' updated to:", state.isConnected);
     });
 
-    addCleanup(() => {
-      console.log("HomePage: Network status listener unsubscribed.");
-      unsubscribe();
-    });
-    return () => {
-      console.log("HomePage: Network status useEffect cleanup.");
-      unsubscribe();
-    };
+    addCleanup(() => unsubscribe());
+    return () => unsubscribe();
   }, [addCleanup]);
 
   // Enhanced User Data Effect with biweekly reset and error recovery
   useEffect(() => {
-    console.log("HomePage: User data useEffect triggered.");
     const auth = getAuth();
     const user = auth.currentUser;
-    console.log("HomePage: Current Firebase user:", user?.uid || "None");
-
+    
     if (!user) {
-      console.log("HomePage: No user logged in. Setting default states.");
       setUsername(t('home.defaultUsername'));
       setCoins(0);
       setIsVIP(false);
       setRemainingQuestions(FREE_QUESTIONS_LIMIT);
       setDailyChallengeCoins(0);
       setDailyRewardClaimed(false);
-
+      
       if (!dataLoaded) {
-        console.log("HomePage: Data not yet loaded, hiding splash screen (no user).");
         setDataLoaded(true);
         setPageLoading(false);
-        SplashScreen.hideAsync().catch(() => { });
-        console.log("HomePage: State 'dataLoaded' set to true, 'pageLoading' set to false.");
+        SplashScreen.hideAsync().catch(() => {});
       }
       return;
     }
 
     setUsername(user.displayName || user.email?.split('@')[0] || t('home.defaultUsername'));
-    console.log("HomePage: Username set to:", username);
 
     const db = getFirestore();
     const userDocRef = doc(db, "users", user.uid);
-    console.log("HomePage: Firestore user document ref:", userDocRef.path);
 
     const unsubscribe = onSnapshot(
       userDocRef,
       async (docSnapshot) => {
         try {
-          console.log("HomePage: Firestore user data snapshot received.");
           if (docSnapshot.exists()) {
-            console.log("HomePage: User document exists.");
             const userData = docSnapshot.data() as UserData;
-            console.log("HomePage: User data:", userData);
-
+            
             // Safe data extraction with fallbacks
             setCoins(userData.coins ?? 0);
-            console.log("HomePage: State 'coins' updated to:", userData.coins ?? 0);
             setIsVIP(userData.vip === true);
-            console.log("HomePage: State 'isVIP' updated to:", userData.vip);
             setDailyChallengeCoins(userData.dailyCoins ?? 0);
-            console.log("HomePage: State 'dailyChallengeCoins' updated to:", userData.dailyCoins ?? 0);
             setIsSubscribedToNotifications(userData.raffleNotificationEnabled === true);
-            console.log("HomePage: State 'isSubscribedToNotifications' updated to:", userData.raffleNotificationEnabled);
 
             // Handle biweekly AI question reset
             let currentQuestions = userData.remainingFreeAIQuestions ?? FREE_QUESTIONS_LIMIT;
-            console.log("HomePage: Current remaining AI questions (before reset check):", currentQuestions);
-
+            
             if (!userData.vip && shouldResetAIQuestions(userData)) {
-              console.log("HomePage: Biweekly AI questions reset triggered.");
               currentQuestions = FREE_QUESTIONS_LIMIT;
-              console.log("HomePage: Remaining questions reset to:", currentQuestions);
-
+              
               // Update Firebase with reset
               try {
                 await updateDoc(userDocRef, {
                   remainingFreeAIQuestions: FREE_QUESTIONS_LIMIT,
                   lastAIQuestionReset: new Date(),
                 });
-                console.log("HomePage: Firestore updated with AI question reset.");
               } catch (updateError) {
-                console.error('HomePage: Error resetting AI questions in Firestore:', updateError);
+                console.error('Error resetting AI questions:', updateError);
               }
             }
+            
             setRemainingQuestions(currentQuestions);
-            console.log("HomePage: State 'remainingQuestions' updated to:", currentQuestions);
-
 
             // Handle date comparison safely
-            const lastClaimedDate = userData.lastClaimedDate?.toDate?.() ??
+            const lastClaimedDate = userData.lastClaimedDate?.toDate?.() ?? 
               (userData.lastClaimedDate ? new Date(userData.lastClaimedDate) : null);
             const todayString = new Date().toISOString().split('T')[0];
-            const lastClaimedString = lastClaimedDate ?
+            const lastClaimedString = lastClaimedDate ? 
               lastClaimedDate.toISOString().split('T')[0] : "";
-            console.log("HomePage: Today's date string:", todayString);
-            console.log("HomePage: Last claimed date string:", lastClaimedString);
-
+            
             setDailyRewardClaimed(lastClaimedString === todayString);
-            console.log("HomePage: State 'dailyRewardClaimed' updated to:", lastClaimedString === todayString);
           } else {
-            console.log("HomePage: User document does not exist. Setting default states.");
             // Reset to defaults if document doesn't exist
             setCoins(0);
             setIsVIP(false);
@@ -668,190 +542,150 @@ export default function HomePage() {
             setIsSubscribedToNotifications(false);
           }
         } catch (error) {
-          console.error("HomePage: Error processing user data snapshot:", error);
+          console.error("Error processing user data:", error);
         } finally {
           if (!dataLoaded) {
-            console.log("HomePage: Data processing complete, hiding splash screen (user data loaded).");
             setDataLoaded(true);
             setPageLoading(false);
-            SplashScreen.hideAsync().catch(() => { });
-            console.log("HomePage: State 'dataLoaded' set to true, 'pageLoading' set to false.");
+            SplashScreen.hideAsync().catch(() => {});
           }
         }
       },
       (error) => {
-        console.error("HomePage: Real-time user data snapshot error:", error);
+        console.error("Real-time snapshot error:", error);
         if (!dataLoaded) {
-          console.log("HomePage: Snapshot error occurred before data loaded, hiding splash screen.");
           setDataLoaded(true);
           setPageLoading(false);
-          SplashScreen.hideAsync().catch(() => { });
+          SplashScreen.hideAsync().catch(() => {});
         }
       }
     );
 
-    addCleanup(() => {
-      console.log("HomePage: User data snapshot listener unsubscribed.");
-      unsubscribe();
-    });
-    return () => {
-      console.log("HomePage: User data useEffect cleanup.");
-      unsubscribe();
-    };
+    addCleanup(() => unsubscribe());
+    return () => unsubscribe();
   }, [dataLoaded, t, addCleanup, shouldResetAIQuestions]);
 
   // Enhanced Hero Cards Effect with fallback handling
   useEffect(() => {
-    console.log("HomePage: Hero cards useEffect triggered.");
     const fetchHeroCards = async () => {
       try {
         setHeroLoading(true);
-        console.log("HomePage: State 'heroLoading' set to true.");
         const db = getFirestore();
         const heroRef = collection(db, "mainHero");
         const q = query(heroRef, where("active", "==", true));
         const snapshot = await getDocs(q);
         const now = new Date();
-        console.log("HomePage: Fetched hero cards snapshot.");
-
+        
         const validCards = snapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as HeroCard))
           .filter(card => {
             try {
               const expireAt = card.expireAt?.toDate?.() || new Date(card.expireAt);
-              const isValid = expireAt > now;
-              if (!isValid) {
-                console.log(`HomeScreen: Hero card "${card.title}" expired at ${expireAt.toISOString()}.`);
-              }
-              return isValid;
-            } catch (e) {
-              console.warn(`HomeScreen: Invalid expireAt date for card "${card.title}". Excluding.`, e);
-              return false; // Exclude cards with invalid dates
+              return expireAt > now;
+            } catch {
+              return false;
             }
           })
           .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
           .slice(0, 5);
-        console.log("HomePage: Processed valid hero cards:", validCards.length);
-
+          
         setHeroCards(validCards);
-        console.log("HomePage: State 'heroCards' updated.");
       } catch (err) {
-        console.error("HomePage: Error loading hero cards:", err);
-        setHeroCards([]); // Fallback to empty array on error
-        console.log("HomePage: State 'heroCards' set to empty array due to error.");
+        console.error("Error loading hero cards:", err);
+        setHeroCards([]);
       } finally {
         setHeroLoading(false);
-        console.log("HomePage: State 'heroLoading' set to false.");
       }
     };
-
+    
     fetchHeroCards();
-    console.log("HomePage: Hero cards fetch initiated.");
   }, []);
 
   // Enhanced Home Videos Effect with fallback handling
   useEffect(() => {
-    console.log("HomePage: Home videos useEffect triggered.");
     const fetchHomeVideos = async () => {
       try {
         setVideosLoading(true);
-        console.log("HomePage: State 'videosLoading' set to true.");
         const db = getFirestore();
         const videosRef = collection(db, "videos");
         let selected: Video[] = [];
-        console.log("HomePage: Fetching sponsored videos.");
 
         // Get sponsored videos first
         const sponsoredQuery = query(
-          videosRef,
-          where("sponsored", "==", true),
-          where("active", "==", true),
+          videosRef, 
+          where("sponsored", "==", true), 
+          where("active", "==", true), 
           limit(3)
         );
         const sponsoredSnap = await getDocs(sponsoredQuery);
         selected = sponsoredSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Video));
-        console.log(`HomePage: Found ${selected.length} sponsored videos.`);
 
         // Fill with featured videos if needed
         if (selected.length < 3) {
-          console.log("HomePage: Fetching featured videos to fill up.");
           const featuredQuery = query(
-            videosRef,
-            where("featured", "==", true),
-            where("active", "==", true),
+            videosRef, 
+            where("featured", "==", true), 
+            where("active", "==", true), 
             limit(3 - selected.length)
           );
           const featuredSnap = await getDocs(featuredQuery);
           const featuredVideos = featuredSnap.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as Video))
-            .filter(v => !selected.some(s => s.id === v.id)); // Avoid duplicates
+            .filter(v => !selected.some(s => s.id === v.id));
           selected = [...selected, ...featuredVideos];
-          console.log(`HomePage: Found ${featuredVideos.length} featured videos. Total: ${selected.length}`);
         }
 
         // Fill with random active videos if still needed
         if (selected.length < 3) {
-          console.log("HomePage: Fetching random active videos to fill up.");
           const allQuery = query(videosRef, where("active", "==", true));
           const allSnap = await getDocs(allQuery);
           const allActive = allSnap.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as Video))
-            .filter(v => !selected.some(s => s.id === v.id)); // Avoid duplicates
-
+            .filter(v => !selected.some(s => s.id === v.id));
+          
           const shuffled = allActive
-            .sort(() => 0.5 - Math.random()) // Shuffle
+            .sort(() => 0.5 - Math.random())
             .slice(0, 3 - selected.length);
           selected = [...selected, ...shuffled];
-          console.log(`HomePage: Found ${shuffled.length} random active videos. Total: ${selected.length}`);
         }
-
+        
         setHomeVideos(selected);
-        console.log("HomePage: State 'homeVideos' updated.");
       } catch (error) {
-        console.error("HomePage: Error fetching home videos:", error);
-        setHomeVideos([]); // Fallback to empty array on error
-        console.log("HomePage: State 'homeVideos' set to empty array due to error.");
+        console.error("Error fetching home videos:", error);
+        setHomeVideos([]);
       } finally {
         setVideosLoading(false);
-        console.log("HomePage: State 'videosLoading' set to false.");
       }
     };
-
+    
     fetchHomeVideos();
-    console.log("HomePage: Home videos fetch initiated.");
   }, []);
 
   // Academy Visibility Effect
   useEffect(() => {
-    console.log("HomePage: Academy visibility useEffect triggered.");
     const fetchAcademyVisibility = async () => {
       try {
         const db = getFirestore();
         const docRef = doc(db, 'settings', 'FC LIVE Academy visibility');
         const docSnap = await getDoc(docRef);
         setAcademyVisible(docSnap.exists() && docSnap.data()?.academyVisible === true);
-        console.log("HomePage: State 'academyVisible' updated to:", docSnap.exists() && docSnap.data()?.academyVisible);
       } catch (err) {
-        console.error("HomePage: Error fetching academy visibility:", err);
-        setAcademyVisible(false); // Default to false on error
-        console.log("HomePage: State 'academyVisible' set to false due to error.");
+        console.error("Error fetching academy visibility:", err);
+        setAcademyVisible(false);
       }
     };
-
+    
     fetchAcademyVisibility();
-    console.log("HomePage: Academy visibility fetch initiated.");
   }, []);
 
   // Enhanced Countdown Timer Effect
   useEffect(() => {
-    console.log("HomePage: Countdown timer useEffect triggered.");
     const timer = setInterval(() => {
       const now = new Date();
-
+      
       // Calculate next Friday 8 PM EST/EDT
       const nextFridayEST = getNextFridayEST();
       const diffToRaffle = nextFridayEST.getTime() - now.getTime();
-      console.log(`HomePage: Time until raffle: ${diffToRaffle}ms.`);
 
       const formatCountdown = (diff: number) => {
         if (diff <= 0) return "00:00:00";
@@ -860,462 +694,353 @@ export default function HomePage() {
         const s = Math.floor((diff % (1000 * 60)) / 1000);
         return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
       };
-
+      
       setTrickCountdown(formatCountdown(diffToRaffle));
-      console.log("HomePage: State 'trickCountdown' updated to:", formatCountdown(diffToRaffle));
-
+      
       // Calculate midnight countdown for daily rewards
       const tomorrow = new Date(now);
       tomorrow.setDate(now.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
       const diffToMidnight = tomorrow.getTime() - now.getTime();
-      console.log(`HomePage: Time until midnight: ${diffToMidnight}ms.`);
-
+      
       if (dailyRewardClaimed) {
         if (diffToMidnight <= 0) {
-          console.log("HomePage: Daily reward timer passed midnight. Resetting claim status.");
           setDailyRewardClaimed(false);
           setDailyRewardCountdownState("00:00:00");
         } else {
           setDailyRewardCountdownState(formatCountdown(diffToMidnight));
-          console.log("HomePage: State 'dailyRewardCountdownState' updated to:", formatCountdown(diffToMidnight));
         }
       } else {
         setDailyRewardCountdownState("00:00:00");
       }
     }, 1000);
 
-    addCleanup(() => {
-      console.log("HomePage: Countdown timer cleared.");
-      clearInterval(timer);
-    });
-    return () => {
-      console.log("HomePage: Countdown timer useEffect cleanup.");
-      clearInterval(timer);
-    };
+    addCleanup(() => clearInterval(timer));
+    return () => clearInterval(timer);
   }, [dailyRewardClaimed, addCleanup, getNextFridayEST]);
 
   // Did You Know Animation Effect
   useEffect(() => {
-    console.log("HomePage: Did You Know animation useEffect triggered.");
     const interval = setInterval(() => {
-      Animated.timing(didYouKnowTextOpacity, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true
+      Animated.timing(didYouKnowTextOpacity, { 
+        toValue: 0, 
+        duration: 500, 
+        useNativeDriver: true 
       }).start(() => {
-        setCurrentDidYouKnowIndex((prevIndex) => {
-          const newIndex = (prevIndex + 1) % didYouKnowTipKeys.length;
-          console.log(`HomePage: Did You Know index changed from ${prevIndex} to ${newIndex}.`);
-          return newIndex;
-        });
-        Animated.timing(didYouKnowTextOpacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true
+        setCurrentDidYouKnowIndex((prevIndex) => 
+          (prevIndex + 1) % didYouKnowTipKeys.length
+        );
+        Animated.timing(didYouKnowTextOpacity, { 
+          toValue: 1, 
+          duration: 500, 
+          useNativeDriver: true 
         }).start();
-        console.log("HomePage: Did You Know text opacity animated back to 1.");
       });
     }, 10000);
 
-    addCleanup(() => {
-      console.log("HomePage: Did You Know interval cleared.");
-      clearInterval(interval);
-    });
-    return () => {
-      console.log("HomePage: Did You Know useEffect cleanup.");
-      clearInterval(interval);
-    };
+    addCleanup(() => clearInterval(interval));
+    return () => clearInterval(interval);
   }, [didYouKnowTipKeys.length, didYouKnowTextOpacity, addCleanup]);
 
   // Progress Animation Effect
   useEffect(() => {
-    console.log("HomePage: Progress animation useEffect triggered. DailyChallengeCoins:", dailyChallengeCoins);
     const progressVal = Math.min(dailyChallengeCoins / 1000, 1);
-    Animated.timing(progressAnim, {
-      toValue: progressVal,
-      duration: 500,
-      useNativeDriver: false
-    }).start(() => {
-      console.log("HomePage: Progress animation completed. Target value:", progressVal);
-    });
+    Animated.timing(progressAnim, { 
+      toValue: progressVal, 
+      duration: 500, 
+      useNativeDriver: false 
+    }).start();
   }, [dailyChallengeCoins, progressAnim]);
 
   // Pulse Animation Effect
   useEffect(() => {
-    console.log("HomePage: Pulse animation useEffect triggered.");
     const pulseAnimation = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 600,
-          useNativeDriver: true
+        Animated.timing(pulseAnim, { 
+          toValue: 1.1, 
+          duration: 600, 
+          useNativeDriver: true 
         }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true
+        Animated.timing(pulseAnim, { 
+          toValue: 1, 
+          duration: 600, 
+          useNativeDriver: true 
         }),
       ])
     );
-
+    
     pulseAnimation.start();
-    console.log("HomePage: Pulse animation started.");
-    addCleanup(() => {
-      console.log("HomePage: Pulse animation stopped.");
-      pulseAnimation.stop();
-    });
-
-    return () => {
-      console.log("HomePage: Pulse animation useEffect cleanup.");
-      pulseAnimation.stop();
-    };
+    addCleanup(() => pulseAnimation.stop());
+    
+    return () => pulseAnimation.stop();
   }, [pulseAnim, addCleanup]);
 
-  // General cleanup effect
+  // Cleanup effect
   useEffect(() => {
-    console.log("HomePage: General cleanup useEffect triggered.");
     return () => {
-      console.log("HomePage: Running all cleanup functions.");
       cleanupRef.current.forEach(cleanup => cleanup());
       cleanupRef.current = [];
-      console.log("HomePage: All cleanup functions executed.");
     };
   }, []);
 
   // Enhanced Event Handlers
-
   const handleDailyReward = useCallback(async () => {
-    console.log("HomePage: handleDailyReward called.");
     try {
       const auth = getAuth();
       const user = auth.currentUser;
-      console.log("HomePage: Current user for daily reward:", user?.uid || "None");
-
+      
       if (!user) {
         Alert.alert(t('home.errorTitle'), t('home.userNotFoundSignInAgain'));
-        console.log("HomePage: Daily reward failed: User not found/signed in.");
         return;
       }
-
+      
       const db = getFirestore();
       const userDocRef = doc(db, "users", user.uid);
-      console.log("HomePage: User document reference for daily reward:", userDocRef.path);
-
+      
       await runTransaction(db, async (transaction) => {
-        console.log("HomePage: Daily reward transaction started.");
         const userDocSnap = await transaction.get(userDocRef);
-        console.log("HomePage: User document snapshot fetched for transaction.");
-
+        
         if (!userDocSnap.exists()) {
-          console.error("HomePage: User document does not exist during daily reward transaction.");
           throw new Error("UserDocNotFound");
         }
-
+        
         const userData = userDocSnap.data() as UserData;
-        const lastClaimedDate = userData.lastClaimedDate?.toDate?.() ??
+        const lastClaimedDate = userData.lastClaimedDate?.toDate?.() ?? 
           (userData.lastClaimedDate ? new Date(userData.lastClaimedDate) : null);
         const todayString = new Date().toISOString().split('T')[0];
-        const lastClaimedString = lastClaimedDate ?
+        const lastClaimedString = lastClaimedDate ? 
           lastClaimedDate.toISOString().split('T')[0] : "";
-        console.log("HomePage: Transaction: lastClaimedString:", lastClaimedString, "todayString:", todayString);
-
-
+        
         if (lastClaimedString === todayString) {
-          console.warn("HomePage: Daily reward already claimed today.");
           throw new Error("AlreadyClaimed");
         }
-
+        
         transaction.update(userDocRef, {
           coins: (userData.coins || 0) + DAILY_REWARD_AMOUNT,
           lastClaimedDate: new Date(),
         });
-        console.log(`HomePage: Transaction: User coins updated by ${DAILY_REWARD_AMOUNT}. Last claimed date set to now.`);
       });
-
+      
       setDailyRewardClaimed(true);
-      console.log("HomePage: State 'dailyRewardClaimed' set to true.");
       setShowRewardPopup(true);
-      console.log("HomePage: State 'showRewardPopup' set to true.");
-
+      
       // Auto-hide reward popup
-      setTimeout(() => {
-        setShowRewardPopup(false);
-        console.log("HomePage: State 'showRewardPopup' set to false (auto-hide).");
-      }, 3000);
-
+      setTimeout(() => setShowRewardPopup(false), 3000);
+      
       // Coin drop animation
       setShowCoinDrop(true);
-      console.log("HomePage: State 'showCoinDrop' set to true.");
       Animated.sequence([
-        Animated.timing(coinOpacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true
+        Animated.timing(coinOpacity, { 
+          toValue: 1, 
+          duration: 500, 
+          useNativeDriver: true 
         }),
         Animated.delay(500),
-        Animated.timing(coinOpacity, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true
+        Animated.timing(coinOpacity, { 
+          toValue: 0, 
+          duration: 500, 
+          useNativeDriver: true 
         }),
-      ]).start(() => {
-        setShowCoinDrop(false);
-        console.log("HomePage: State 'showCoinDrop' set to false (animation complete).");
-      });
-
+      ]).start(() => setShowCoinDrop(false));
+      
     } catch (error: any) {
-      console.error("HomePage: Daily reward error:", error);
-
+      console.error("Daily reward error:", error);
+      
       let errorMessage = t('home.couldNotClaimReward');
       if (error.message === "AlreadyClaimed") {
         errorMessage = t('home.rewardAlreadyClaimed');
       } else if (error.message === "UserDocNotFound") {
         errorMessage = t('home.userDoesNotExistContactSupport');
       }
-
+      
       Alert.alert(t('home.errorTitle'), errorMessage);
     }
   }, [t, coinOpacity]);
 
   const handleAskAI = useCallback(async () => {
-    console.log("HomePage: handleAskAI called.");
     if (!question.trim()) {
       Alert.alert(t('home.errorTitle'), 'Please enter a question first! ⚽');
-      console.log("HomePage: AI question validation failed: Empty question.");
       return;
     }
-
+    
     if (!isOnline) {
-      Alert.alert('❌ No Connection', 'Check your internet connection to ask AI questions!');
-      console.log("HomePage: AI question failed: No internet connection.");
+      Alert.alert('⚽ No Connection', 'Check your internet connection to ask AI questions!');
       return;
     }
-
+    
     if (!isVIP && remainingQuestions <= 0) {
       Alert.alert(t('home.limitReachedTitle'), t('home.allFreeQuestionsUsed'));
-      console.log("HomePage: AI question failed: Free question limit reached for non-VIP user.");
       return;
     }
-
+    
     setLoading(true);
-    console.log("HomePage: State 'loading' set to true (AI chat).");
     const BACKEND_URL = "https://fc-ai-backend.onrender.com/api/ask-ai";
-    console.log("HomePage: AI Backend URL:", BACKEND_URL);
-
+    
     try {
-      console.log("HomePage: Initiating AI API call.");
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question, isVIP }),
       });
-      console.log("HomePage: AI API response received. Status:", response.status);
-
+      
       if (!response.ok) {
-        console.error(`HomePage: Server error from AI API: ${response.status} ${response.statusText}`);
         throw new Error(`Server error: ${response.status} ${response.statusText}`);
       }
-
+      
       const data = await response.json();
-      console.log("HomePage: AI API response data:", data);
-
+      
       if (data.answer) {
         setAnswer(data.answer);
         setFullAnswer(data.answer);
         setShortAnswer(truncateText(data.answer));
-        console.log("HomePage: State 'answer', 'fullAnswer', 'shortAnswer' updated with AI response.");
-
+        
         // Update remaining questions for non-VIP users
         if (!isVIP) {
-          console.log("HomePage: User is not VIP. Decrementing remaining questions.");
           const auth = getAuth();
           const user = auth.currentUser;
-
+          
           if (user) {
             const db = getFirestore();
             const userDocRef = doc(db, "users", user.uid);
             const newRemaining = Math.max(0, remainingQuestions - 1);
-            console.log(`HomePage: New remaining questions: ${newRemaining}.`);
-
+            
             setRemainingQuestions(newRemaining);
-            console.log("HomePage: State 'remainingQuestions' updated.");
-
+            
             try {
               await updateDoc(userDocRef, {
                 remainingFreeAIQuestions: newRemaining,
                 lastAIQuestionDate: new Date().toISOString().split('T')[0],
               });
-              console.log("HomePage: Firestore updated with new remaining questions.");
             } catch (updateError) {
-              console.error("HomePage: Error updating user questions in Firestore:", updateError);
-              setRemainingQuestions(remainingQuestions); // Revert state on update error
+              console.error("Error updating user questions:", updateError);
+              setRemainingQuestions(remainingQuestions);
             }
-          } else {
-            console.warn("HomePage: User not found for updating remaining questions after AI call.");
           }
         }
       } else {
         setAnswer(t('home.noAnswerReceived'));
-        setShortAnswer(t('home.noAnswerReceived'));
-        setFullAnswer(t('home.noAnswerReceived'));
-        console.log("HomePage: No answer received from AI API.");
       }
     } catch (error: any) {
-      console.error("HomePage: AI API call error:", error);
-      let errorMessage = error.message.includes('Network request failed') || error.message.includes('fetch') ?
-        '❌ Connection timeout! Check your internet and try again.' :
-        '🚧 AI is taking a break! Please try again in a moment.';
+      console.error("AI API call error:", error);
+      const errorMessage = error.message.includes('Network request failed') || error.message.includes('fetch') ? 
+        '⚽ Connection timeout! Check your internet and try again.' : 
+        '🤖 AI is taking a break! Please try again in a moment.';
       setAnswer(errorMessage);
-      setShortAnswer(errorMessage);
-      setFullAnswer(errorMessage);
-      console.log("HomePage: State 'answer', 'shortAnswer', 'fullAnswer' updated with error message.");
     } finally {
       setLoading(false);
-      console.log("HomePage: State 'loading' set to false (AI chat).");
     }
   }, [question, isVIP, remainingQuestions, t, isOnline]);
 
   const truncateText = useCallback((text: string, maxWords = 20) => {
-    console.log(`HomePage: truncateText called with text length ${text.length}, maxWords ${maxWords}.`);
     const words = text.split(" ");
-    const truncated = words.slice(0, maxWords).join(" ") + (words.length > maxWords ? "..." : "");
-    console.log("HomePage: Truncated text:", truncated);
-    return truncated;
+    return words.slice(0, maxWords).join(" ") + (words.length > maxWords ? "..." : "");
   }, []);
 
   const handleUseCoinsForAI = useCallback(async () => {
-    console.log("HomePage: handleUseCoinsForAI called.");
     const auth = getAuth();
     const user = auth.currentUser;
-    console.log("HomePage: Current user for coin usage:", user?.uid || "None");
-
+    
     if (!user) {
       Alert.alert(t('home.errorTitle'), t('home.userNotSignedIn'));
-      console.log("HomePage: Coin usage failed: User not signed in.");
       return;
     }
-
+    
     if (coins < AI_QUESTION_COST) {
-      Alert.alert('❌ Not Enough Coins', `You need ${AI_QUESTION_COST} coins for an extra question!`);
-      console.log(`HomePage: Coin usage failed: Not enough coins. Needed ${AI_QUESTION_COST}, had ${coins}.`);
+      Alert.alert('⚽ Not Enough Coins', `You need ${AI_QUESTION_COST} coins for an extra question!`);
       return;
     }
-
+    
     const db = getFirestore();
     const userRef = doc(db, "users", user.uid);
-    console.log("HomePage: User document reference for coin usage:", userRef.path);
-
+    
     try {
       await runTransaction(db, async (transaction) => {
-        console.log("HomePage: Coin usage transaction started.");
         const userDoc = await transaction.get(userRef);
-        console.log("HomePage: User document snapshot fetched for transaction.");
-
+        
         if (!userDoc.exists()) {
-          console.error("HomePage: User document does not exist during coin usage transaction.");
           throw new Error("UserDocNotFound");
         }
-
+        
         const userData = userDoc.data() as UserData;
         const currentCoins = userData.coins || 0;
         const currentQuestions = userData.remainingFreeAIQuestions || 0;
-        console.log(`HomePage: Transaction: Current coins: ${currentCoins}, current questions: ${currentQuestions}.`);
-
+        
         if (currentCoins < AI_QUESTION_COST) {
-          console.warn("HomePage: Transaction: Not enough coins during double-check.");
           throw new Error("NotEnoughCoins");
         }
-
+        
         transaction.update(userRef, {
           coins: currentCoins - AI_QUESTION_COST,
           remainingFreeAIQuestions: currentQuestions + 1,
         });
-        console.log(`HomePage: Transaction: Coins deducted by ${AI_QUESTION_COST}, questions increased by 1.`);
       });
-
-      Alert.alert('🎉 Success!', 'You gained an extra AI question! Game on!');
-      console.log("HomePage: Coin usage for AI question successful.");
+      
+      Alert.alert('⚽ Success!', 'You gained an extra AI question! Game on!');
     } catch (err: any) {
-      console.error("HomePage: Error using coins for AI:", err);
-
+      console.error("Error using coins for AI:", err);
+      
       let errorMessage = 'Transaction failed. Please try again!';
       if (err.message === "NotEnoughCoins") {
-        errorMessage = `❌ You need ${AI_QUESTION_COST} coins for this!`;
+        errorMessage = `⚽ You need ${AI_QUESTION_COST} coins for this!`;
       } else if (err.message === "UserDocNotFound") {
         errorMessage = t('home.userDoesNotExistContactSupport');
       }
-
-      Alert.alert('❌ Oops!', errorMessage);
+      
+      Alert.alert('⚽ Oops!', errorMessage);
     }
   }, [coins, t]);
 
   const openVideoModal = useCallback((videoUrl: string) => {
-    console.log("HomePage: openVideoModal called with URL:", videoUrl);
     if (!videoUrl) {
-      Alert.alert('❌ Video Error', 'This video is currently unavailable!');
-      console.log("HomePage: Video modal failed: No video URL provided.");
+      Alert.alert('⚽ Video Error', 'This video is currently unavailable!');
       return;
     }
     setSelectedVideoUrl(videoUrl);
-    console.log("HomePage: State 'selectedVideoUrl' updated.");
     setVideoModalVisible(true);
-    console.log("HomePage: State 'videoModalVisible' set to true.");
   }, []);
 
   const handleHeroPress = useCallback((card: HeroCard) => {
-    console.log("HomePage: handleHeroPress called for card:", card.id, card.title);
     if (card.videoUrl) {
       openVideoModal(card.videoUrl);
-      console.log("HomePage: Hero card press -> opening video modal.");
     } else if (card.articleId) {
-      router.push({
-        pathname: "/screens/ArticleScreen",
-        params: { articleId: card.articleId }
+      router.push({ 
+        pathname: "/screens/ArticleScreen", 
+        params: { articleId: card.articleId } 
       });
-      console.log("HomePage: Hero card press -> navigating to ArticleScreen.");
     } else if (card.type === "card") {
       router.push("/screens/GenerateCard");
-      console.log("HomePage: Hero card press -> navigating to GenerateCard.");
     } else {
-      Alert.alert('❌ Coming Soon', 'This feature will be available soon!');
-      console.log("HomePage: Hero card press -> feature not yet available.");
+      Alert.alert('⚽ Coming Soon', 'This feature will be available soon!');
     }
   }, [openVideoModal, router]);
 
-  const handleShufflePress = useCallback(() => {
-    console.log("HomePage: handleShufflePress called.");
+  const handleShafflePress = useCallback(() => {
     router.push('/screens/Raffle');
-    console.log("HomePage: Navigating to Raffle screen.");
   }, [router]);
 
-  // Enhanced render function with accessibility
-  const renderHeroCard = useCallback(({ item }: { item: HeroCard }) => {
-    console.log("HomePage: renderHeroCard called for item:", item.id);
-    return (
-      <FadeTouchable
-        onPress={() => handleHeroPress(item)}
-        style={styles.heroCardTouchable}
-        accessibilityLabel={`Hero card: ${item.title}`}
-        accessibilityHint="Tap to view content"
-      >
-        <Image
-          source={{ uri: item.imageUrl }}
-          style={styles.heroCardImageBackground}
-          onError={({ nativeEvent: { error } }) => console.log('HomeScreen: Hero image failed to load:', item.imageUrl, error)}
-          defaultSource={require('../../assets/images/fallback.png')}
-        />
-        <View style={styles.heroCardTextContainer}>
-          <Text style={styles.heroCardTitle}>{item.title}</Text>
-          <Text style={styles.heroCardSubtitle}>{item.subtitle}</Text>
-        </View>
-      </FadeTouchable>
-    );
-  }, [handleHeroPress]);
+  // Enhanced render functions with accessibility
+  const renderHeroCard = useCallback(({ item }: { item: HeroCard }) => (
+    <FadeTouchable
+      onPress={() => handleHeroPress(item)}
+      style={styles.heroCardTouchable}
+      accessibilityLabel={`Hero card: ${item.title}`}
+      accessibilityHint="Tap to view content"
+    >
+      <Image 
+        source={{ uri: item.imageUrl }} 
+        style={styles.heroCardImageBackground}
+        onError={() => console.log('Hero image failed to load:', item.imageUrl)}
+        defaultSource={require('../../assets/images/fallback.png')}
+      />
+      <View style={styles.heroCardTextContainer}>
+        <Text style={styles.heroCardTitle}>{item.title}</Text>
+        <Text style={styles.heroCardSubtitle}>{item.subtitle}</Text>
+      </View>
+    </FadeTouchable>
+  ), [handleHeroPress]);
 
   // Loading state
   if (pageLoading) {
-    console.log("HomePage: Displaying page loading indicator.");
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FFD700" />
@@ -1323,19 +1048,18 @@ export default function HomePage() {
       </View>
     );
   }
-  console.log("HomePage: Page loading complete. Rendering main content.");
 
   return (
     <ErrorBoundary>
-      <ImageBackground
-        source={require('../../assets/images/bk final.png')}
+      <ImageBackground 
+        source={require('../../assets/images/bk final.png')} 
         style={styles.pageBackground}
         imageStyle={{ transform: [{ translateY: -10 }] }}
       >
         <OfflineBanner isVisible={!isOnline} />
         {showRewardPopup && <RewardPopup amount={DAILY_REWARD_AMOUNT} type="coins" />}
-
-        <ScrollView
+        
+        <ScrollView 
           contentContainerStyle={{ paddingTop: 110 }}
           showsVerticalScrollIndicator={false}
         >
@@ -1343,7 +1067,7 @@ export default function HomePage() {
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               {!dailyRewardClaimed ? (
-                <FadeTouchable
+                <FadeTouchable 
                   onPress={handleDailyReward}
                   accessibilityLabel="Daily reward"
                   accessibilityHint="Tap to claim your daily coins"
@@ -1356,7 +1080,7 @@ export default function HomePage() {
                     />
                     <View style={styles.badgeOverlay}>
                       <Text style={styles.badgeText}>
-                        +{DAILY_REWARD_AMOUNT}💰
+                        +{DAILY_REWARD_AMOUNT}
                       </Text>
                     </View>
                   </View>
@@ -1369,14 +1093,14 @@ export default function HomePage() {
                       style={styles.rewardCircle}
                       imageStyle={{ resizeMode: 'contain' }}
                     >
-                      <Text style={styles.rewardCircleText}>✔</Text>
+                      <Text style={styles.rewardCircleText}>✓</Text>
                     </ImageBackground>
                   </View>
                   <Text style={styles.rewardCountdown}>{dailyRewardCountdownState}</Text>
                 </View>
               )}
             </View>
-
+            
             <View style={styles.headerRight}>
               {isVIP && <VIPBadge />}
               <Text style={styles.userHomeText}>
@@ -1389,8 +1113,8 @@ export default function HomePage() {
               </View>
               <Link href="/profile" asChild>
                 <TouchableOpacity style={styles.headerButton}>
-                  <Image
-                    source={{ uri: 'https://via.placeholder.com/40' }}
+                  <Image 
+                    source={{ uri: 'https://via.placeholder.com/40' }} 
                     style={styles.profileImage}
                     defaultSource={require('../../assets/images/fallback.png')}
                   />
@@ -1402,18 +1126,15 @@ export default function HomePage() {
           {/* Academy Button */}
           {academyVisible && (
             <View style={styles.academyButtonWrapper}>
-              <FadeTouchable
-                onPress={() => {
-                  router.push('/screens/FCAcademy');
-                  console.log("HomePage: Navigating to FCAcademy screen.");
-                }}
+              <FadeTouchable 
+                onPress={() => router.push('/screens/FCAcademy')}
                 accessibilityLabel="FC Academy"
                 accessibilityHint="Enter the academy for training"
               >
-                <LinearGradient
-                  colors={['#00FFC3', '#006eff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+                <LinearGradient 
+                  colors={['#00FFC3', '#006eff']} 
+                  start={{ x: 0, y: 0 }} 
+                  end={{ x: 1, y: 1 }} 
                   style={styles.academyTopButton}
                 >
                   <Text style={styles.academyTopButtonText}>
@@ -1454,23 +1175,23 @@ export default function HomePage() {
                     index * SCREEN_WIDTH * 0.95,
                     (index + 1) * SCREEN_WIDTH * 0.95,
                   ];
-                  const dotOpacity = scrollX.interpolate({
-                    inputRange,
-                    outputRange: [0.3, 1, 0.3],
-                    extrapolate: 'clamp'
+                  const dotOpacity = scrollX.interpolate({ 
+                    inputRange, 
+                    outputRange: [0.3, 1, 0.3], 
+                    extrapolate: 'clamp' 
                   });
-                  const dotScale = scrollX.interpolate({
-                    inputRange,
-                    outputRange: [0.8, 1.2, 0.8],
-                    extrapolate: 'clamp'
+                  const dotScale = scrollX.interpolate({ 
+                    inputRange, 
+                    outputRange: [0.8, 1.2, 0.8], 
+                    extrapolate: 'clamp' 
                   });
                   return (
-                    <Animated.View
-                      key={index}
+                    <Animated.View 
+                      key={index} 
                       style={[
-                        styles.heroDot,
+                        styles.heroDot, 
                         { opacity: dotOpacity, transform: [{ scale: dotScale }] }
-                      ]}
+                      ]} 
                     />
                   );
                 })}
@@ -1481,17 +1202,14 @@ export default function HomePage() {
           {/* Daily Challenge & Weekly Raffle Section */}
           <View style={styles.challengeMainContainer}>
             {/* Daily Challenge Card */}
-            <FadeTouchable
-              onPress={() => {
-                router.push('/screens/DailyChallenge');
-                console.log("HomePage: Navigating to DailyChallenge screen.");
-              }}
+            <FadeTouchable 
+              onPress={() => router.push('/screens/DailyChallenge')} 
               style={styles.dailyChallengeWrapper}
               accessibilityLabel="Daily Challenge"
               accessibilityHint="Complete daily challenges to earn coins"
             >
-              <ImageBackground
-                source={require('../../assets/images/daily challenge3.png')}
+              <ImageBackground 
+                source={require('../../assets/images/daily challenge3.png')} 
                 style={styles.dailyChallengeCard}
                 imageStyle={styles.dailyChallengeImageStyle}
                 defaultSource={require('../../assets/images/fallback.png')}
@@ -1500,7 +1218,7 @@ export default function HomePage() {
                   colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.8)']}
                   style={styles.challengeGradientOverlay}
                 >
-                  <View style={styles.challengeCardContents}>
+                  <View style={styles.challengeCardContent}>
                     <View style={styles.challengeIconContainer}>
                       <Gift size={20} color="#FFD700" />
                     </View>
@@ -1511,7 +1229,7 @@ export default function HomePage() {
                       {t('home.dailyChallengeSubtitle')}
                     </Text>
                     <View style={styles.progressBarBackground}>
-                      <Animated.View
+                      <Animated.View 
                         style={[
                           styles.progressBarFill,
                           {
@@ -1521,7 +1239,7 @@ export default function HomePage() {
                               extrapolate: 'clamp'
                             }),
                           },
-                        ]}
+                        ]} 
                       />
                     </View>
                     <Text style={styles.progressText}>
@@ -1533,14 +1251,14 @@ export default function HomePage() {
             </FadeTouchable>
 
             {/* Weekly Raffle Card */}
-            <FadeTouchable
-              onPress={handleShufflePress}
+            <FadeTouchable 
+              onPress={handleShafflePress} 
               style={styles.weeklyRaffleWrapper}
               accessibilityLabel="Weekly Raffle"
               accessibilityHint="Join the weekly raffle to win prizes"
             >
-              <ImageBackground
-                source={require('../../assets/images/daily challenge3.png')}
+              <ImageBackground 
+                source={require('../../assets/images/daily challenge3.png')} 
                 style={styles.weeklyRaffleCard}
                 imageStyle={styles.weeklyRaffleImageStyle}
                 defaultSource={require('../../assets/images/fallback.png')}
@@ -1549,7 +1267,7 @@ export default function HomePage() {
                   colors={['rgba(255,107,53,0.7)', 'rgba(139,69,19,0.8)']}
                   style={styles.raffleGradientOverlay}
                 >
-                  <View style={styles.raffleCardContents}>
+                  <View style={styles.raffleCardContent}>
                     <View style={styles.raffleIconContainer}>
                       <Trophy size={20} color="#FFD700" />
                     </View>
@@ -1567,7 +1285,7 @@ export default function HomePage() {
                         {trickCountdown}
                       </Text>
                     </View>
-                    <TouchableOpacity
+                    <TouchableOpacity 
                       style={[
                         styles.notifyMeButton,
                         isSubscribedToNotifications && styles.notifyMeButtonSubscribed
@@ -1589,96 +1307,84 @@ export default function HomePage() {
           </View>
 
           {/* Enhanced Ask AI Section */}
-          <ImageBackground
-            source={require('../../assets/images/bk8.png')}
-            style={styles.askAIContainer}
+          <ImageBackground 
+            source={require('../../assets/images/bk8.png')} 
+            style={styles.askAIContainer} 
             imageStyle={styles.askAIImageStyle}
             defaultSource={require('../../assets/images/fallback.png')}
           >
             <Text style={styles.askAISectionTitleStyle}>
               {t('home.askAISectionTitle')}
             </Text>
-
+            
             <View style={styles.askInputContainer}>
               <TextInput
                 style={[
-                  styles.askInput,
+                  styles.askInput, 
                   { height: Math.max(40, Math.min(inputHeight, 200)) }
                 ]}
                 placeholder="⚽ Ask me anything about football!"
                 placeholderTextColor="#bbb"
                 value={question}
-                onChangeText={(text) => {
-                  setQuestion(text);
-                  console.log("HomePage: AI question input changed:", text);
-                }}
+                onChangeText={setQuestion}
                 multiline={true}
                 scrollEnabled={true}
-                onContentSizeChange={(event) =>
+                onContentSizeChange={(event) => 
                   setInputHeight(event.nativeEvent.contentSize.height)
                 }
                 editable={!loading}
                 maxLength={500}
               />
             </View>
-
-            <FadeTouchable
-              onPress={handleAskAI}
+            
+            <FadeTouchable 
+              onPress={handleAskAI} 
               style={[styles.askButton, loading && styles.askButtonDisabled]}
               disabled={loading}
               accessibilityLabel="Ask AI"
               accessibilityHint="Get AI answers to your questions"
             >
-              <View style={styles.askButtonContents}>
+              <View style={styles.askButtonContent}>
                 {loading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Brain size={24} color="#FFFFFF" />
                 )}
                 <Text style={styles.askButtonText}>
-                  {loading ? '💬 Thinking...' : '💬 Ask AI'}
+                  {loading ? '🤖 Thinking...' : '🤖 Ask AI'}
                 </Text>
               </View>
             </FadeTouchable>
-
-            {!isVIP && (remainingQuestions <= 0) && (
+            
+            {!isVIP && (
               <Text style={styles.remainingQuestions}>
-                ❌ {remainingQuestions} questions left (resets biweekly)
+                ⚽ {remainingQuestions} questions left (resets biweekly)
               </Text>
             )}
-            {!isVIP && (remainingQuestions > 0) && (
-              <Text style={styles.remainingQuestions}>
-                ✅ {remainingQuestions} questions left (resets biweekly)
-              </Text>
-            )}
-
-
+            
             {answer !== '' && (
               <View style={styles.answerContainer}>
                 <Text style={styles.answerText}>{shortAnswer}</Text>
                 {fullAnswer.length > shortAnswer.length && (
-                  <TouchableOpacity
-                    style={styles.viewMoreButton}
-                    onPress={() => {
-                      router.push({
-                        pathname: "/AskAIFullPage",
-                        params: { fullAnswer: encodeURIComponent(fullAnswer) }
-                      });
-                      console.log("HomePage: Navigating to AskAIFullPage.");
-                    }}
+                  <TouchableOpacity 
+                    style={styles.viewMoreButton} 
+                    onPress={() => router.push({ 
+                      pathname: "/AskAiFullPage", 
+                      params: { fullAnswer: encodeURIComponent(fullAnswer) } 
+                    })}
                   >
                     <Text style={styles.viewMoreText}>
-                      View Full Answer 👉
+                      View Full Answer →
                     </Text>
                   </TouchableOpacity>
                 )}
               </View>
             )}
-
+            
             {(!isVIP && remainingQuestions <= 0) && (
               <View style={styles.extraOptions}>
-                <FadeTouchable
-                  style={styles.coinOption}
+                <FadeTouchable 
+                  style={styles.coinOption} 
                   onPress={handleUseCoinsForAI}
                   accessibilityLabel="Buy question with coins"
                 >
@@ -1686,7 +1392,7 @@ export default function HomePage() {
                     colors={['#FFD700', '#FFA500']}
                     style={styles.coinOptionGradient}
                   >
-                    <View style={styles.optionContents}>
+                    <View style={styles.optionContent}>
                       <PlusCircle size={20} color="#000" />
                       <Text style={styles.optionText}>
                         💰 {AI_QUESTION_COST} Coins
@@ -1694,20 +1400,17 @@ export default function HomePage() {
                     </View>
                   </LinearGradient>
                 </FadeTouchable>
-
-                <FadeTouchable
-                  style={styles.membershipOption}
-                  onPress={() => {
-                    router.push("/screens/ManageMyAccount");
-                    console.log("HomePage: Navigating to ManageMyAccount for VIP.");
-                  }}
+                
+                <FadeTouchable 
+                  style={styles.membershipOption} 
+                  onPress={() => router.push("/screens/ManageMyAccount")}
                   accessibilityLabel="Upgrade to VIP"
                 >
                   <LinearGradient
-                    colors={['#FFCD35', '#FF8C00']}
+                    colors={['#FF6B35', '#FF8C00']}
                     style={styles.membershipOptionGradient}
                   >
-                    <View style={styles.optionContents}>
+                    <View style={styles.optionContent}>
                       <Crown size={20} color="#FFF" />
                       <Text style={styles.membershipOptionText}>
                         👑 Go VIP
@@ -1721,18 +1424,18 @@ export default function HomePage() {
 
           {/* Did You Know Section */}
           <View style={styles.didYouKnowOuterContainer}>
-            <LinearGradient
-              colors={['#000000', '#022d45']}
+            <LinearGradient 
+              colors={['#000000', '#022d45']} 
               style={styles.didYouKnowContainer}
             >
-              <View style={styles.didYouKnowContents}>
+              <View style={styles.didYouKnowContent}>
                 <HelpCircle size={20} color="#FFA500" style={styles.didYouKnowIcon} />
-                <Animated.View
+                <Animated.View 
                   style={[styles.didYouKnowTextContainer, { opacity: didYouKnowTextOpacity }]}
                 >
                   <Text style={styles.didYouKnowText}>
-                    {t('home.didYouKnowFull', {
-                      tip: t(didYouKnowTipKeys[currentDidYouKnowIndex])
+                    {t('home.didYouKnowFull', { 
+                      tip: t(didYouKnowTipKeys[currentDidYouKnowIndex]) 
                     })}
                   </Text>
                 </Animated.View>
@@ -1741,16 +1444,16 @@ export default function HomePage() {
           </View>
 
           {/* Enhanced Video Guides Section */}
-          <ImageBackground
-            source={require('../../assets/images/video room3.png')}
-            style={styles.quickTipsContainer}
+          <ImageBackground 
+            source={require('../../assets/images/video room3.png')} 
+            style={styles.quickTipsContainer} 
             imageStyle={styles.quickTipsImageStyle}
             defaultSource={require('../../assets/images/fallback.png')}
           >
             <Text style={styles.videoGuideSectionTitleStyle}>
               {t('home.videoGuideSectionTitle')}
             </Text>
-
+            
             <View style={styles.videoGridContainer}>
               {videosLoading ? (
                 [0, 1, 2].map(index => (
@@ -1771,11 +1474,11 @@ export default function HomePage() {
                     accessibilityHint="Tap to watch video"
                   >
                     <View style={styles.videoCardImageContainer}>
-                      <Image
-                        source={{ uri: video.thumbnail_url }}
+                      <Image 
+                        source={{ uri: video.thumbnail_url }} 
                         style={styles.videoThumbnail}
                         defaultSource={require('../../assets/images/fallback.png')}
-                        onError={({ nativeEvent: { error } }) => console.log('HomeScreen: Video thumbnail failed to load:', video.thumbnail_url, error)}
+                        onError={() => console.log('Video thumbnail failed:', video.thumbnail_url)}
                       />
                       <View style={styles.videoOverlay}>
                         <View style={styles.playButton}>
@@ -1791,23 +1494,20 @@ export default function HomePage() {
               ) : (
                 <View style={styles.videosLoadingContainer}>
                   <Text style={styles.videosLoadingText}>
-                    🚫 No videos available right now
+                    ⚽ No videos available right now
                   </Text>
                 </View>
               )}
             </View>
-
+            
             <View style={styles.moreVideosButtonContainer}>
-              <FadeTouchable
-                onPress={() => {
-                  router.push('/screens/MoreVideos');
-                  console.log("HomePage: Navigating to MoreVideos screen.");
-                }}
+              <FadeTouchable 
+                onPress={() => router.push('/screens/MoreVideos')} 
                 style={styles.watchMoreButton}
                 accessibilityLabel="More videos"
               >
-                <LinearGradient
-                  colors={['#01361a', '#001e24']}
+                <LinearGradient 
+                  colors={['#01361a', '#001e24']} 
                   style={styles.watchMoreButtonGradient}
                 >
                   <Text style={styles.watchMoreButtonText}>
@@ -1820,9 +1520,9 @@ export default function HomePage() {
 
           {/* DNA Section */}
           <View style={styles.dnaOuterContainer}>
-            <ImageBackground
-              source={require('../../assets/images/dna.png')}
-              style={styles.dnaContainer}
+            <ImageBackground 
+              source={require('../../assets/images/dna.png')} 
+              style={styles.dnaContainer} 
               imageStyle={styles.dnaImageStyle}
               defaultSource={require('../../assets/images/fallback.png')}
             >
@@ -1830,16 +1530,13 @@ export default function HomePage() {
               <View style={styles.dnaContent}>
                 <Text style={styles.dnaMainText}>{t('home.dnaMainText')}</Text>
                 <Text style={styles.dnaSubText}>{t('home.dnaSubText')}</Text>
-                <FadeTouchable
-                  onPress={() => {
-                    router.push('/Dna/quiz');
-                    console.log("HomePage: Navigating to DNA Quiz screen.");
-                  }}
+                <FadeTouchable 
+                  onPress={() => router.push('/Dna/quiz')} 
                   style={styles.dnaButtonTouchable}
                   accessibilityLabel="Start DNA quiz"
                 >
-                  <LinearGradient
-                    colors={['#FFD700', '#FFA500']}
+                  <LinearGradient 
+                    colors={['#FFD700', '#FFA500']} 
                     style={styles.dnaButtonGradient}
                   >
                     <Text style={styles.dnaButtonText}>
@@ -1855,8 +1552,8 @@ export default function HomePage() {
         {/* Coin Drop Animation */}
         {showCoinDrop && (
           <Animated.View style={[styles.coinDrop, { opacity: coinOpacity }]}>
-            <LinearGradient
-              colors={['#FFD700', '#FFC107']}
+            <LinearGradient 
+              colors={['#FFD700', '#FFC107']} 
               style={styles.coinButtonGradient}
             >
               <Text style={styles.coinButtonText}>
@@ -1867,30 +1564,22 @@ export default function HomePage() {
         )}
 
         {/* Enhanced Video Modal */}
-        <Modal
-          visible={videoModalVisible}
-          animationType="slide"
-          onRequestClose={() => {
-            setVideoModalVisible(false);
-            setSelectedVideoUrl(''); // Clear URL on close
-            console.log("HomePage: Video modal closed. State 'videoModalVisible' set to false, 'selectedVideoUrl' cleared.");
-          }}
+        <Modal 
+          visible={videoModalVisible} 
+          animationType="slide" 
+          onRequestClose={() => setVideoModalVisible(false)}
         >
           <View style={styles.modalContainer}>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => {
-                setVideoModalVisible(false);
-                setSelectedVideoUrl('');
-                console.log("HomePage: Video modal close button pressed.");
-              }}
+            <TouchableOpacity 
+              style={styles.modalCloseButton} 
+              onPress={() => setVideoModalVisible(false)}
             >
-              <Text style={styles.modalCloseText}>✖ Close</Text>
+              <Text style={styles.modalCloseText}>✕ Close</Text>
             </TouchableOpacity>
             {selectedVideoUrl && (
-              <WebView
-                source={{ uri: selectedVideoUrl }}
-                style={styles.webview}
+              <WebView 
+                source={{ uri: selectedVideoUrl }} 
+                style={styles.webview} 
                 allowsFullscreenVideo
                 startInLoadingState
                 renderLoading={() => (
@@ -1939,20 +1628,20 @@ const styles = StyleSheet.create({
   },
 
   // Offline banner
-  offlineBanner: {
-    position: 'absolute',
-    top: 50,    // Changed from 0 to 50
-    left: 0,
-    right: 0,
-    backgroundColor: '#FF4444',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,    // Increased from 8 to 12
-    paddingTop: 15,         // Reduced from 40 to 15
-    zIndex: 1000,
-    elevation: 1000,
-  },
+offlineBanner: {
+  position: 'absolute',
+  top: 50,           // Changed from 0 to 50
+  left: 0,
+  right: 0,
+  backgroundColor: '#FF4444',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingVertical: 12,    // Increased from 8 to 12
+  paddingTop: 15,         // Reduced from 40 to 15
+  zIndex: 1000,
+  elevation: 1000,
+},
   offlineBannerText: {
     color: '#FFFFFF',
     fontSize: 14,
@@ -2027,7 +1716,7 @@ const styles = StyleSheet.create({
   },
   videoSkeletonImage: {
     width: '100%',
-    aspectRatio: 16 / 9,
+    aspectRatio: 16/9,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   videoSkeletonText: {
@@ -2038,53 +1727,53 @@ const styles = StyleSheet.create({
   },
 
   // Main layout
-  pageBackground: {
-    flex: 1,
+  pageBackground: { 
+    flex: 1, 
     width: '100%',
   },
 
   // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingBottom: 5,
-    alignItems: 'center',
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 15, 
+    paddingBottom: 5, 
+    alignItems: 'center', 
     marginTop: -100,
   },
-  headerLeft: {
-    flexDirection: 'row',
+  headerLeft: { 
+    flexDirection: 'row', 
     alignItems: 'center',
   },
-  headerRight: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
+  headerRight: { 
+    flexDirection: 'column', 
+    alignItems: 'flex-end', 
     marginTop: -5,
   },
-  headerButton: {
+  headerButton: { 
     padding: 5,
   },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  profileImage: { 
+    width: 40, 
+    height: 40, 
+    borderRadius: 20, 
     marginTop: 5,
   },
-  userHomeText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 60,
+  userHomeText: { 
+    color: '#FFFFFF', 
+    fontSize: 16, 
+    fontWeight: '600', 
+    marginTop: 60, 
     marginRight: 5,
   },
-  coinRewardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  coinRewardRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
     marginTop: 3,
   },
-  headerCoinBalance: {
-    color: '#FFD700',
-    fontSize: 18,
+  headerCoinBalance: { 
+    color: '#FFD700', 
+    fontSize: 18, 
     marginRight: 8,
     fontWeight: '700',
   },
@@ -2103,125 +1792,125 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.9 }],
     opacity: 0.3,
   },
-  rewardCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
+  rewardCircle: { 
+    width: 50, 
+    height: 50, 
+    borderRadius: 25, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
     marginTop: 25,
   },
-  rewardCircleText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  rewardCircleText: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
     color: '#00FF00',
   },
-  rewardCountdown: {
-    fontSize: 10,
-    color: '#FFD700',
-    marginTop: 5,
+  rewardCountdown: { 
+    fontSize: 10, 
+    color: '#FFD700', 
+    marginTop: 5, 
     fontWeight: '600',
   },
-  pulsingCoin: {
-    width: 60,
-    height: 60,
-    resizeMode: 'contain',
-    marginTop: 25,
+  pulsingCoin: { 
+    width: 60, 
+    height: 60, 
+    resizeMode: 'contain', 
+    marginTop: 25, 
     marginLeft: 8,
   },
-  badgeOverlay: {
-    position: 'absolute',
-    top: 15,
-    right: -15,
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowOffset: { width: 1, height: 1 },
-    shadowRadius: 4,
+  badgeOverlay: { 
+    position: 'absolute', 
+    top: 15, 
+    right: -15, 
+    backgroundColor: '#FFD700', 
+    paddingHorizontal: 8, 
+    paddingVertical: 3, 
+    borderRadius: 12, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.4, 
+    shadowOffset: { width: 1, height: 1 }, 
+    shadowRadius: 4, 
     elevation: 4,
   },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+  badgeText: { 
+    fontSize: 12, 
+    fontWeight: 'bold', 
     color: '#000',
   },
 
   // Academy button
-  academyButtonWrapper: {
-    marginTop: 10,
-    marginBottom: 15,
-    marginHorizontal: 15,
+  academyButtonWrapper: { 
+    marginTop: 10, 
+    marginBottom: 15, 
+    marginHorizontal: 15, 
     zIndex: 10,
   },
-  academyTopButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 30,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#00FFC3',
-    shadowColor: '#00FFF7',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.95,
-    shadowRadius: 16,
+  academyTopButton: { 
+    paddingVertical: 16, 
+    paddingHorizontal: 30, 
+    borderRadius: 20, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    borderWidth: 1.5, 
+    borderColor: '#00FFC3', 
+    shadowColor: '#00FFF7', 
+    shadowOffset: { width: 0, height: 0 }, 
+    shadowOpacity: 0.95, 
+    shadowRadius: 16, 
     elevation: 18,
   },
-  academyTopButtonText: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    textShadowColor: '#00FFF7',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
-    letterSpacing: 1.2,
+  academyTopButtonText: { 
+    fontSize: 18, 
+    fontWeight: '900', 
+    color: '#FFFFFF', 
+    textShadowColor: '#00FFF7', 
+    textShadowOffset: { width: 0, height: 0 }, 
+    textShadowRadius: 10, 
+    letterSpacing: 1.2, 
     textTransform: 'uppercase',
   },
 
   // Hero cards
-  heroCardTouchable: {
-    width: SCREEN_WIDTH * 0.95,
-    marginHorizontal: (SCREEN_WIDTH * 0.05) / 2,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 2,
+  heroCardTouchable: { 
+    width: SCREEN_WIDTH * 0.95, 
+    marginHorizontal: (SCREEN_WIDTH * 0.05) / 2, 
+    borderRadius: 16, 
+    overflow: 'hidden', 
+    borderWidth: 2, 
     borderColor: '#00FFFF',
   },
-  heroCardImageBackground: {
-    width: '100%',
-    height: 240,
+  heroCardImageBackground: { 
+    width: '100%', 
+    height: 240, 
     justifyContent: 'flex-end',
   },
-  heroCardTextContainer: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 16,
+  heroCardTextContainer: { 
+    backgroundColor: 'rgba(0,0,0,0.6)', 
+    padding: 16, 
     paddingBottom: 18,
   },
-  heroCardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+  heroCardTitle: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    color: '#fff', 
     marginBottom: 4,
   },
-  heroCardSubtitle: {
-    fontSize: 14,
+  heroCardSubtitle: { 
+    fontSize: 14, 
     color: '#ccc',
   },
-  heroDotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 10,
-    marginBottom: 25,
+  heroDotsContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    marginTop: 10, 
+    marginBottom: 25, 
     zIndex: 10,
   },
-  heroDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 5,
+  heroDot: { 
+    width: 8, 
+    height: 8, 
+    borderRadius: 4, 
+    marginHorizontal: 5, 
     backgroundColor: '#FFD700',
   },
 
@@ -2258,7 +1947,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
   },
-  challengeCardContents: {
+  challengeCardContent: {
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2343,7 +2032,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
   },
-  raffleCardContents: {
+  raffleCardContent: {
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2435,53 +2124,53 @@ const styles = StyleSheet.create({
   },
 
   // Ask AI section
-  askAIContainer: {
-    paddingHorizontal: 15,
-    paddingTop: 40,
-    paddingBottom: 20,
-    marginHorizontal: 10,
-    marginVertical: 15,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#bbbede',
-    overflow: 'hidden',
+  askAIContainer: { 
+    paddingHorizontal: 15, 
+    paddingTop: 40, 
+    paddingBottom: 20, 
+    marginHorizontal: 10, 
+    marginVertical: 15, 
+    borderRadius: 10, 
+    borderWidth: 2, 
+    borderColor: '#bbedea', 
+    overflow: 'hidden', 
     position: 'relative',
   },
-  askAIImageStyle: {
-    borderRadius: 10,
+  askAIImageStyle: { 
+    borderRadius: 10, 
     opacity: 0.9,
   },
-  askAISectionTitleStyle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    position: 'absolute',
-    top: 15,
-    left: 0,
+  askAISectionTitleStyle: { 
+    color: '#FFFFFF', 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    textAlign: 'center', 
+    position: 'absolute', 
+    top: 15, 
+    left: 0, 
     right: 0,
   },
-  askInputContainer: {
-    width: '100%',
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#bbbede',
+  askInputContainer: { 
+    width: '100%', 
+    backgroundColor: "rgba(0, 0, 0, 0.3)", 
+    borderRadius: 8, 
+    borderWidth: 1, 
+    borderColor: '#bbedea', 
     marginBottom: 15,
   },
-  askInput: {
-    color: "#fff",
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    fontSize: 16,
+  askInput: { 
+    color: "#fff", 
+    paddingHorizontal: 10, 
+    paddingVertical: 10, 
+    fontSize: 16, 
     lineHeight: 22,
   },
-  askButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    borderWidth: 2,
+  askButton: { 
+    backgroundColor: 'transparent', 
+    paddingVertical: 12, 
+    paddingHorizontal: 15, 
+    borderRadius: 8, 
+    borderWidth: 2, 
     borderColor: '#39FF14',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2489,60 +2178,60 @@ const styles = StyleSheet.create({
   askButtonDisabled: {
     opacity: 0.6,
   },
-  askButtonContents: {
+  askButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  askButtonText: {
-    marginLeft: 8,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  askButtonText: { 
+    marginLeft: 8, 
+    color: '#FFFFFF', 
+    fontWeight: 'bold', 
     fontSize: 16,
   },
-  remainingQuestions: {
-    textAlign: 'center',
-    color: '#FFD700',
-    marginTop: 10,
+  remainingQuestions: { 
+    textAlign: 'center', 
+    color: '#FFD700', 
+    marginTop: 10, 
     fontSize: 12,
     fontWeight: '600',
   },
-  answerContainer: {
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 15,
-    borderWidth: 1,
-    borderColor: '#39FF14',
+  answerContainer: { 
+    padding: 12, 
+    borderRadius: 8, 
+    marginTop: 15, 
+    borderWidth: 1, 
+    borderColor: '#39FF14', 
     backgroundColor: 'rgba(0,255,0,0.05)',
   },
-  answerText: {
-    fontSize: 14,
-    color: "#fcff00",
-    fontWeight: "500",
+  answerText: { 
+    fontSize: 14, 
+    color: "#fcff00", 
+    fontWeight: "500", 
     lineHeight: 20,
   },
-  viewMoreButton: {
-    marginTop: 10,
+  viewMoreButton: { 
+    marginTop: 10, 
     alignSelf: "flex-end",
   },
-  viewMoreText: {
-    fontSize: 13,
-    color: "#FFFFFF",
-    fontWeight: "600",
-    backgroundColor: "rgba(0, 122, 255, 0.8)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  viewMoreText: { 
+    fontSize: 13, 
+    color: "#FFFFFF", 
+    fontWeight: "600", 
+    backgroundColor: "rgba(0, 122, 255, 0.8)", 
+    paddingHorizontal: 12, 
+    paddingVertical: 6, 
     borderRadius: 6,
   },
-  extraOptions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 15,
+  extraOptions: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginTop: 15, 
     gap: 10,
   },
 
   // Enhanced option buttons
-  coinOption: {
+  coinOption: { 
     flex: 1,
     borderRadius: 10,
     overflow: 'hidden',
@@ -2554,7 +2243,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  membershipOption: {
+  membershipOption: { 
     flex: 1,
     borderRadius: 10,
     overflow: 'hidden',
@@ -2566,82 +2255,82 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionContents: {
+  optionContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionText: {
-    marginLeft: 6,
-    color: '#000',
-    fontWeight: 'bold',
+  optionText: { 
+    marginLeft: 6, 
+    color: '#000', 
+    fontWeight: 'bold', 
     fontSize: 12,
     textAlign: 'center',
   },
   membershipOptionText: {
-    marginLeft: 6,
-    color: '#FFF',
-    fontWeight: 'bold',
+    marginLeft: 6, 
+    color: '#FFF', 
+    fontWeight: 'bold', 
     fontSize: 12,
     textAlign: 'center',
   },
 
   // Did you know
-  didYouKnowOuterContainer: {
-    opacity: 0.9,
-    marginHorizontal: 10,
+  didYouKnowOuterContainer: { 
+    opacity: 0.9, 
+    marginHorizontal: 10, 
     marginVertical: 10,
   },
-  didYouKnowContainer: {
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#bbbede',
+  didYouKnowContainer: { 
+    padding: 15, 
+    borderRadius: 10, 
+    borderWidth: 2, 
+    borderColor: '#bbedea',
   },
-  didYouKnowContents: {
+  didYouKnowContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  didYouKnowIcon: {
+  didYouKnowIcon: { 
     marginRight: 12,
   },
   didYouKnowTextContainer: {
     flex: 1,
   },
-  didYouKnowText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    lineHeight: 20,
+  didYouKnowText: { 
+    color: '#FFFFFF', 
+    fontSize: 14, 
+    lineHeight: 20, 
     fontWeight: '500',
   },
 
   // Video section
-  quickTipsContainer: {
-    paddingHorizontal: 15,
-    paddingTop: 50,
-    paddingBottom: 20,
-    borderRadius: 10,
-    margin: 10,
-    borderWidth: 2,
-    borderColor: '#bbbede',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 8,
+  quickTipsContainer: { 
+    paddingHorizontal: 15, 
+    paddingTop: 50, 
+    paddingBottom: 20, 
+    borderRadius: 10, 
+    margin: 10, 
+    borderWidth: 2, 
+    borderColor: '#bbedea', 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowOpacity: 0.5, 
+    shadowRadius: 8, 
+    elevation: 8, 
     position: 'relative',
   },
-  quickTipsImageStyle: {
+  quickTipsImageStyle: { 
     borderRadius: 10,
   },
-  videoGuideSectionTitleStyle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    position: 'absolute',
-    top: 15,
-    left: 0,
+  videoGuideSectionTitleStyle: { 
+    color: '#FFFFFF', 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    textAlign: 'center', 
+    position: 'absolute', 
+    top: 15, 
+    left: 0, 
     right: 0,
   },
   videoGridContainer: {
@@ -2669,7 +2358,7 @@ const styles = StyleSheet.create({
     left: -9,
   },
   videoCard2: {
-    marginTop: 20,
+   marginTop: 20,
     left: -2,
   },
   videoCard3: {
@@ -2679,7 +2368,7 @@ const styles = StyleSheet.create({
   videoCardImageContainer: {
     position: 'relative',
     width: '100%',
-    aspectRatio: 16 / 9,
+    aspectRatio: 16/9,
   },
   videoThumbnail: {
     width: '100%',
@@ -2736,139 +2425,139 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  videosLoadingText: {
-    color: '#ccc',
-    fontStyle: 'italic',
+  videosLoadingText: { 
+    color: '#ccc', 
+    fontStyle: 'italic', 
     fontSize: 14,
     textAlign: 'center',
   },
-  moreVideosButtonContainer: {
-    marginTop: 20,
+  moreVideosButtonContainer: { 
+    marginTop: 20, 
     alignItems: 'center',
   },
-  watchMoreButton: {
+  watchMoreButton: { 
     alignSelf: 'center',
   },
-  watchMoreButtonGradient: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#bbbede',
+  watchMoreButtonGradient: { 
+    paddingVertical: 12, 
+    paddingHorizontal: 24, 
+    borderRadius: 8, 
+    borderWidth: 2, 
+    borderColor: '#bbedea',
   },
-  watchMoreButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textShadowColor: '#39FF14',
-    textShadowOffset: { width: 0, height: 0 },
+  watchMoreButtonText: { 
+    color: '#fff', 
+    fontSize: 14, 
+    fontWeight: 'bold', 
+    textShadowColor: '#39FF14', 
+    textShadowOffset: { width: 0, height: 0 }, 
     textShadowRadius: 10,
   },
 
   // DNA section
-  dnaOuterContainer: {
-    marginHorizontal: 10,
+  dnaOuterContainer: { 
+    marginHorizontal: 10, 
     marginVertical: 20,
   },
-  dnaContainer: {
-    height: 220,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#bbbede',
+  dnaContainer: { 
+    height: 220, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    borderRadius: 10, 
+    overflow: 'hidden', 
+    borderWidth: 2, 
+    borderColor: '#bbedea',
   },
-  dnaImageStyle: {
+  dnaImageStyle: { 
     borderRadius: 10,
   },
-  dnaOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  dnaOverlay: { 
+    ...StyleSheet.absoluteFillObject, 
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
     zIndex: 1,
   },
-  dnaContent: {
-    zIndex: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
+  dnaContent: { 
+    zIndex: 2, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
     paddingHorizontal: 20,
   },
-  dnaMainText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fffc00',
-    marginBottom: 8,
-    textShadowColor: '#000',
-    textShadowOffset: { width: 2, height: 2 },
+  dnaMainText: { 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    color: '#fffc00', 
+    marginBottom: 8, 
+    textShadowColor: '#000', 
+    textShadowOffset: { width: 2, height: 2 }, 
     textShadowRadius: 6,
     textAlign: 'center',
   },
-  dnaSubText: {
-    color: '#fff',
-    fontSize: 14,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginBottom: 20,
-    textShadowColor: '#000',
-    textShadowOffset: { width: 1, height: 1 },
+  dnaSubText: { 
+    color: '#fff', 
+    fontSize: 14, 
+    fontStyle: 'italic', 
+    textAlign: 'center', 
+    marginBottom: 20, 
+    textShadowColor: '#000', 
+    textShadowOffset: { width: 1, height: 1 }, 
     textShadowRadius: 4,
     lineHeight: 20,
   },
   dnaButtonTouchable: {},
-  dnaButtonGradient: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 10,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
+  dnaButtonGradient: { 
+    paddingHorizontal: 24, 
+    paddingVertical: 12, 
+    borderRadius: 10, 
+    shadowColor: '#FFD700', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.8, 
     shadowRadius: 8,
     elevation: 5,
   },
-  dnaButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#121212',
+  dnaButtonText: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    color: '#121212', 
     textAlign: 'center',
   },
 
   // Coin drop animation
-  coinDrop: {
-    position: 'absolute',
-    alignSelf: 'center',
-    zIndex: 999,
+  coinDrop: { 
+    position: 'absolute', 
+    alignSelf: 'center', 
+    zIndex: 999, 
     top: '45%',
   },
-  coinButtonGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+  coinButtonGradient: { 
+    width: 80, 
+    height: 80, 
+    borderRadius: 40, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
     elevation: 8,
     shadowColor: '#FFD700',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
     shadowRadius: 8,
   },
-  coinButtonText: {
-    color: '#333',
-    fontSize: 16,
+  coinButtonText: { 
+    color: '#333', 
+    fontSize: 16, 
     fontWeight: 'bold',
   },
 
   // Modal
-  modalContainer: {
-    flex: 1,
+  modalContainer: { 
+    flex: 1, 
     backgroundColor: '#000',
   },
-  modalCloseButton: {
+  modalCloseButton: { 
     padding: 15,
-    backgroundColor: '#FF4444',
-    alignSelf: 'flex-end',
-    margin: 10,
-    borderRadius: 8,
-    borderWidth: 2,
+    backgroundColor: '#FF4444', 
+    alignSelf: 'flex-end', 
+    margin: 10, 
+    borderRadius: 8, 
+    borderWidth: 2, 
     borderColor: '#39FF14',
     shadowColor: '#FF4444',
     shadowOffset: { width: 0, height: 2 },
@@ -2876,12 +2565,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  modalCloseText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  modalCloseText: { 
+    color: '#FFFFFF', 
+    fontWeight: 'bold', 
     fontSize: 16,
   },
-  webview: {
+  webview: { 
     flex: 1,
   },
   webviewLoading: {
