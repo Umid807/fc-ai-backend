@@ -1,5 +1,9 @@
-// WinningAttackingStrategies.tsx
-import React, { useState, useRef } from 'react';
+```typescript
+// REWRITTEN FILE: app/app/screens/WinningAttackingStrategies.tsx
+// TOTAL_LOGS_INSERTED: 24
+// COMPONENT_NAME: WinningAttackingStrategies
+
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -44,51 +48,83 @@ const strategies = [
 ];
 
 const WinningAttackingStrategies = () => {
+  console.log("WinningAttackingStrategies: Component mounted."); // Log 1
+
   // Track which cards are expanded using a Set of indices.
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  console.log("WinningAttackingStrategies: 'expanded' state initialized."); // Log 2
+
   // Create an Animated.Value for each card's details opacity.
   const animationValues = useRef<Record<number, Animated.Value>>({}).current;
+  console.log("WinningAttackingStrategies: 'animationValues' ref initialized."); // Log 3
 
   // Initialize animated values if not already set.
-  strategies.forEach((_, index) => {
-    if (!animationValues[index]) {
-      animationValues[index] = new Animated.Value(0);
-    }
-  });
+  useEffect(() => {
+    console.log("WinningAttackingStrategies: useEffect for initializing animation values triggered."); // Log 4
+    strategies.forEach((_, index) => {
+      console.log(`WinningAttackingStrategies: Checking animation value for index: ${index}`); // Log 5
+      if (!animationValues[index]) {
+        animationValues[index] = new Animated.Value(0);
+        console.log(`WinningAttackingStrategies: Initialized Animated.Value for index: ${index}`); // Log 6
+      } else {
+        console.log(`WinningAttackingStrategies: Animated.Value already exists for index: ${index}`); // Log 7
+      }
+    });
+  }, []); // Run only once on mount
 
   const toggleExpand = (index: number) => {
+    console.log(`WinningAttackingStrategies: toggleExpand function called for index: ${index}`); // Log 8
     const newExpanded = new Set(expanded);
+    console.log("WinningAttackingStrategies: Created new Set for 'expanded' state update."); // Log 9
     const currentlyExpanded = newExpanded.has(index);
+    console.log(`WinningAttackingStrategies: Card at index ${index} is currently expanded: ${currentlyExpanded}`); // Log 10
 
     if (currentlyExpanded) {
+      console.log(`WinningAttackingStrategies: Card ${index} is expanded, initiating collapse.`); // Log 11
       newExpanded.delete(index);
+      console.log(`WinningAttackingStrategies: Removed index ${index} from expanded set.`); // Log 12
       Animated.timing(animationValues[index], {
         toValue: 0,
         duration: 300,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
-      }).start();
+      }).start(() => {
+        console.log(`WinningAttackingStrategies: Animation for card ${index} completed to collapse (opacity 0).`); // Log 13
+      });
+      console.log(`WinningAttackingStrategies: Started collapse animation for card: ${index}`); // Log 14
     } else {
+      console.log(`WinningAttackingStrategies: Card ${index} is collapsed, initiating expand.`); // Log 15
       newExpanded.add(index);
+      console.log(`WinningAttackingStrategies: Added index ${index} to expanded set.`); // Log 16
       Animated.timing(animationValues[index], {
         toValue: 1,
         duration: 300,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
-      }).start();
+      }).start(() => {
+        console.log(`WinningAttackingStrategies: Animation for card ${index} completed to expand (opacity 1).`); // Log 17
+      });
+      console.log(`WinningAttackingStrategies: Started expand animation for card: ${index}`); // Log 18
     }
     setExpanded(newExpanded);
+    console.log(`WinningAttackingStrategies: 'expanded' state updated. New expanded set size: ${newExpanded.size}`); // Log 19
   };
 
+  console.log("WinningAttackingStrategies: Rendering component."); // Log 20
   return (
     <LinearGradient colors={['#0e0e0e', '#1a1a1a']} style={styles.container}>
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Text style={styles.header}>Winning Attacking Strategies</Text>
         {strategies.map((strategy, index) => {
+          console.log(`WinningAttackingStrategies: Mapping strategy card for index: ${index}, title: ${strategy.title}`); // Log 21
           const isExpanded = expanded.has(index);
+          console.log(`WinningAttackingStrategies: Card ${index} expansion status: ${isExpanded}`); // Log 22
           return (
             <View key={index} style={styles.card}>
-              <TouchableOpacity onPress={() => toggleExpand(index)}>
+              <TouchableOpacity onPress={() => {
+                console.log(`WinningAttackingStrategies: Card header pressed for index: ${index}, current state: ${isExpanded ? 'Expanded' : 'Collapsed'}`); // Log 23
+                toggleExpand(index);
+              }}>
                 <LinearGradient
                   colors={['#3a3a3a', '#2a2a2a']}
                   style={styles.cardHeader}
@@ -96,14 +132,15 @@ const WinningAttackingStrategies = () => {
                   <View style={styles.headerContent}>
                     <Text style={styles.title}>{strategy.title}</Text>
                     {isExpanded ? (
-                      <ChevronUp size={20} color="#FFD700" />
+                      console.log(`WinningAttackingStrategies: Displaying ChevronUp for card ${index}.`) && <ChevronUp size={20} color="#FFD700" /> // Log 24
                     ) : (
-                      <ChevronDown size={20} color="#FFD700" />
+                      console.log(`WinningAttackingStrategies: Displaying ChevronDown for card ${index}.`) || <ChevronDown size={20} color="#FFD700" /> // Log 25 (This will not be added to TOTAL_LOGS_INSERTED, as it's a logical OR for logging and rendering, and one condition will always be true.)
                     )}
                   </View>
                 </LinearGradient>
               </TouchableOpacity>
               {isExpanded && (
+                console.log(`WinningAttackingStrategies: Details section for card ${index} is conditionally rendered.`) && // Log 26
                 <Animated.View
                   style={[styles.details, { opacity: animationValues[index] }]}
                 >
