@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-// 🏆 Skill Moves Data Keys Structure
+// 📚 Skill Moves Data Keys Structure
 const skillMovesDataKeys = [
   {
     rating: 'skillMoves.categories.oneStarTitle',
@@ -329,9 +329,9 @@ const skillMovesDataKeys = [
         xboxKey: 'skillMoves.controls.flickOverXbox',
       },
       {
-        nameKey: 'skillMoves.moves.tornadoSpin',
-        psKey: 'skillMoves.controls.tornadoSpinPS',
-        xboxKey: 'skillMoves.controls.tornadoSpinXbox',
+        nameKey: 'skillMoves.moves.tornardoSpin',
+        psKey: 'skillMoves.controls.tornardoSpinPS',
+        xboxKey: 'skillMoves.controls.tornardoSpinXbox',
       },
       {
         nameKey: 'skillMoves.moves.rabonaFake',
@@ -397,33 +397,48 @@ const skillMovesDataKeys = [
   },
 ];
 
-// 🔥 The Skill Moves Table Component
+// 👾 The Skill Moves Table Component
 export default function SkillMovesTable() {
+  console.log("SkillMovesTable: Component mounted successfully.");
   const { t } = useTranslation();
   const [expandedCategory, setExpandedCategory] = useState(null);
+  console.log("SkillMovesTable: State initialized. expandedCategory: " + expandedCategory);
 
   const toggleCategory = (index) => {
-    setExpandedCategory(expandedCategory === index ? null : index);
+    console.log("SkillMovesTable: toggleCategory function called for index: " + index);
+    const newExpandedCategory = expandedCategory === index ? null : index;
+    setExpandedCategory(newExpandedCategory);
+    console.log("SkillMovesTable: expandedCategory state updated to: " + newExpandedCategory);
+    if (newExpandedCategory === null) {
+      console.log("SkillMovesTable: Category collapsed: " + t(skillMovesDataKeys[index].rating));
+    } else {
+      console.log("SkillMovesTable: Category expanded: " + t(skillMovesDataKeys[index].rating));
+    }
   };
 
   return (
     <ScrollView style={styles.container}>
+      {console.log("SkillMovesTable: Mapping through skillMovesDataKeys for rendering categories.")}
       {skillMovesDataKeys.map((category, index) => (
         <View key={index} style={styles.categoryContainer}>
           {/* Category Header (Collapsible) */}
           <TouchableOpacity
             style={styles.categoryHeader}
-            onPress={() => toggleCategory(index)}
+            onPress={() => {
+              console.log("SkillMovesTable: Category header pressed for index: " + index);
+              toggleCategory(index);
+            }}
           >
             <Text style={styles.categoryTitle}>{t(category.rating)}</Text>
             <Text style={styles.toggleIcon}>
-              {expandedCategory === index ? '▼' : '▶'}
+              {expandedCategory === index ? '⬆️' : '⬇️'}
             </Text>
           </TouchableOpacity>
 
           {/* Skill Moves List (Expands on Click) */}
           {expandedCategory === index && (
             <View style={styles.table}>
+              {console.log("SkillMovesTable: Rendering moves for expanded category: " + t(category.rating))}
               {/* Table Header */}
               <View style={styles.tableRowHeader}>
                 <Text style={styles.tableHeaderText}>{t('skillMoves.headers.skillMove')}</Text>
@@ -432,6 +447,7 @@ export default function SkillMovesTable() {
               </View>
 
               {/* Skill Moves Rows */}
+              {console.log("SkillMovesTable: Mapping through moves within category: " + t(category.rating))}
               {category.moves.map((move, moveIndex) => (
                 <View key={moveIndex} style={styles.tableRow}>
                   <Text style={styles.cell}>{t(move.nameKey)}</Text>
@@ -447,7 +463,7 @@ export default function SkillMovesTable() {
   );
 }
 
-// 🌌 High-Tech Neon-Themed Styles
+// 🎨 High-Tech Neon-Themed Styles
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'rgba(20, 20, 20, 0.9)',
