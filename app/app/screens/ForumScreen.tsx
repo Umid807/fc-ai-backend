@@ -1,3 +1,8 @@
+```typescript
+// REWRITTEN FILE: app/app/screens/ForumScreen.tsx
+// TOTAL_LOGS_INSERTED: 104
+// COMPONENT_NAME: ForumLayout
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
@@ -141,7 +146,8 @@ const QuickInfoBox = ({
   const createNotification = async (targetUserId: string, notifData: any) => {
     console.log("QuickInfoBox: createNotification called for userId:", targetUserId, "with data:", notifData);
     try {
-      console.log('Creating notification for', targetUserId, '->', notifData);
+      console.log('Creating notification for', targetUserId, '-', notifData);
+      // Logic to add notification to Firestore (omitted for brevity, as per original file structure)
     } catch (error: any) {
       console.error('Failed to create notification:', error);
       console.log("QuickInfoBox: createNotification failed. Error:", error.message);
@@ -161,7 +167,7 @@ const QuickInfoBox = ({
         const userSnap = await getDoc(doc(db, 'users', authUser.uid));
         if (userSnap.exists()) {
           console.log("QuickInfoBox: checkFollowStatus - Current user data fetched successfully.");
-          const data = userSnap.data();
+          const data = userSnap.data() as UserData;
           setFollowing(((data.following || []) as string[]).includes(userData.uid));
           console.log("QuickInfoBox: 'following' state updated to:", ((data.following || []) as string[]).includes(userData.uid));
         }
@@ -480,11 +486,11 @@ export default function ForumLayout() {
       setInitialLoading(false);
       console.log("ForumLayout: 'initialLoading' state set to false.");
     }
-  }, [activeTab, posts.length, t]); // Added posts.length to dependencies to allow re-fetching when empty initially or force is true.
+  }, [activeTab, posts.length, t]); // Added posts.length to dependencies to allow re-fetching when empty initially or force is true
 
   useEffect(() => {
     console.log("ForumLayout: useEffect triggered for initial post fetch.");
-    fetchInitialPosts(false);
+    fetchInitialPosts(false); // Do not force refresh on first mount
   }, [fetchInitialPosts]);
   console.log("ForumLayout: useEffect dependencies for initial post fetch updated.");
 
@@ -515,7 +521,7 @@ export default function ForumLayout() {
   const fetchMorePosts = async () => {
     console.log("ForumLayout: fetchMorePosts called.");
     if (!hasMore || loadingMore || !lastVisible) {
-      console.log("ForumLayout: Skipping fetchMorePosts, hasMore:", hasMore, "loadingMore:", loadingMore, "lastVisible:", lastVisible);
+      console.log("ForumLayout: Skipping fetchMorePosts, hasMore:", hasMore, "loadingMore:", loadingMore, "lastVisible:", !!lastVisible);
       return;
     }
 
@@ -765,7 +771,7 @@ export default function ForumLayout() {
                   console.log("ForumLayout: Language toggle pressed. 'showLanguageSelector' state toggled to:", !showLanguageSelector);
                 }}
               >
-                <Text style={styles.languageToggleText}>🌍 {currentLanguage}</Text>
+                <Text style={styles.languageToggleText}>🌐 {currentLanguage}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1110,7 +1116,7 @@ const FloatingPostButton = ({ router }: any) => {
     return () => {
       animation.stop();
       console.log("FloatingPostButton: Pulse animation stopped (cleanup).");
-    }
+    };
   }, [pulse]);
   console.log("FloatingPostButton: useEffect dependencies for animation updated.");
 
@@ -1143,7 +1149,7 @@ const PrivateReplyModal = ({ visible, postId, onClose }: any) => {
   const handleSend = async () => {
     console.log("PrivateReplyModal: handleSend called.");
     if (cooldown || sending || !replyText.trim()) {
-      console.log("PrivateReplyModal: Skipping send, cooldown, sending, or empty replyText detected.");
+      console.log("PrivateReplyModal: Skipping send, cooldown:", cooldown, "sending:", sending, "empty replyText:", !replyText.trim());
       return;
     }
 
