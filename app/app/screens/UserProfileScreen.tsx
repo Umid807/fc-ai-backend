@@ -1,7 +1,3 @@
-```
-// REWRITTEN FILE: app/app/screens/UserProfileScreen.tsx
-// TOTAL_LOGS_INSERTED: 80
-// COMPONENT_NAME: UserProfileScreen
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from 'react-i18next'; // Import useTranslation
