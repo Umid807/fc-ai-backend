@@ -19,62 +19,98 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width, height } = Dimensions.get('window');
 
 const AcademyScreen = React.forwardRef((props, ref) => {
+  console.log("AcademyScreen: Component rendering started.");
+
   const { t } = useTranslation();
   const router = useRouter();
   const isFocused = useIsFocused();
+  console.log(`AcademyScreen: isFocused status updated to: ${isFocused}`);
 
   // Intro zoom-in effect
   const containerScale = useRef(new Animated.Value(0.9)).current;
+  console.log("AcademyScreen: Initializing containerScale Animated.Value to 0.9.");
 
   // Animated opacity values for press effects
   const attackingOpacity = useRef(new Animated.Value(0)).current;
   const defendingOpacity = useRef(new Animated.Value(0)).current;
+  console.log("AcademyScreen: Initializing attackingOpacity and defendingOpacity to 0.");
 
   // Text animation effects
   const attackingTextScale = useRef(new Animated.Value(1)).current;
   const defendingTextScale = useRef(new Animated.Value(1)).current;
+  console.log("AcademyScreen: Initializing attackingTextScale and defendingTextScale to 1.");
 
   // Parallax effect
   const tiltAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  console.log("AcademyScreen: Initializing tiltAnim Animated.ValueXY to {x: 0, y: 0}.");
 
   useEffect(() => {
-      console.log("AcademyScreen: Component mounted, starting intro zoom-in animation.");
+    console.log("AcademyScreen: useEffect hook triggered. Starting intro zoom-in animation.");
     Animated.timing(containerScale, {
       toValue: 1,
       duration: 600,
       easing: Easing.out(Easing.exp),
       useNativeDriver: true,
-    }).start();
-
-    Accelerometer.setUpdateInterval(16);
-    const subscription = Accelerometer.addListener(({ x, y }) => {
-      tiltAnim.setValue({ x: -x * 0.2, y: y * 0.2 });
+    }).start(() => {
+      console.log("AcademyScreen: Intro zoom-in animation completed.");
     });
 
-    return () => subscription && subscription.remove();
+    console.log("AcademyScreen: Setting Accelerometer update interval to 16ms for parallax effect.");
+    Accelerometer.setUpdateInterval(16);
+    let subscription;
+    try {
+      subscription = Accelerometer.addListener(({ x, y }) => {
+        tiltAnim.setValue({ x: -x * 0.2, y: y * 0.2 });
+      });
+      console.log("AcademyScreen: Accelerometer listener added successfully for parallax effect.");
+    } catch (error) {
+      console.error(`AcademyScreen: Failed to add Accelerometer listener. Error: ${error.message}`);
+    }
+
+    return () => {
+      console.log("AcademyScreen: useEffect cleanup triggered. Attempting to remove Accelerometer listener.");
+      if (subscription) {
+        subscription.remove();
+        console.log("AcademyScreen: Accelerometer listener removed during cleanup.");
+      } else {
+        console.log("AcademyScreen: No Accelerometer subscription found to remove.");
+      }
+    };
   }, []);
 
-  const handleAttackingPress = () => router.push('/screens/OffenseScreen');
-  const handleDefendingPress = () => router.push('/screens/DefensiveFundamentals');
+  const handleAttackingPress = () => {
+    console.log("AcademyScreen: Attacking section pressed. Initiating navigation to OffenseScreen.");
+    router.push('/screens/OffenseScreen');
+    console.log("AcademyScreen: Navigation to OffenseScreen completed.");
+  };
+
+  const handleDefendingPress = () => {
+    console.log("AcademyScreen: Defending section pressed. Initiating navigation to DefensiveFundamentals.");
+    router.push('/screens/DefensiveFundamentals');
+    console.log("AcademyScreen: Navigation to DefensiveFundamentals completed.");
+  };
 
   const animateSection = (overlayAnim, textScaleAnim, toValue, duration) => {
-  console.log("animateSection called with:", { toValue, duration });
+    console.log(`AcademyScreen: animateSection called. Target toValue: ${toValue}, Duration: ${duration}ms.`);
     Animated.parallel([
       Animated.timing(overlayAnim, {
-        toValue: toValue === 1 ? 0.3 : 0,
+        toValue: toValue === 1 ? 0.3 : 0, // Conditional opacity value
         duration,
         easing: Easing.linear,
         useNativeDriver: false,
       }),
       Animated.timing(textScaleAnim, {
-        toValue: toValue === 1 ? 1.1 : 1,
+        toValue: toValue === 1 ? 1.1 : 1, // Conditional text scale value
         duration,
         easing: Easing.out(Easing.quad),
         useNativeDriver: true,
       }),
-    ]).start();
+    ]).start(() => {
+      console.log(`AcademyScreen: Section animation for toValue ${toValue} completed.`);
+    });
   };
 
+  console.log("AcademyScreen: Rendering JSX elements for Academy menu.");
   return (
     <Animated.View ref={ref} style={[styles.container, { transform: [{ scale: containerScale }] }]}>
       <Animated.View
@@ -91,7 +127,6 @@ const AcademyScreen = React.forwardRef((props, ref) => {
               style={styles.backgroundImage}
               resizeMode="cover"
             />
-            
             {/* Gradient Overlay for Better Text Readability */}
             <LinearGradient
               colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.3)']}
@@ -100,7 +135,7 @@ const AcademyScreen = React.forwardRef((props, ref) => {
 
             {/* Text Overlay */}
             <View style={styles.textContainer}>
-              <Animated.Text 
+              <Animated.Text
                 style={[
                   styles.sectionTitle,
                   styles.attackingTitle,
@@ -118,8 +153,14 @@ const AcademyScreen = React.forwardRef((props, ref) => {
             <TouchableOpacity
               style={styles.touchableContainer}
               activeOpacity={1}
-              onPressIn={() => animateSection(attackingOpacity, attackingTextScale, 1, 200)}
-              onPressOut={() => animateSection(attackingOpacity, attackingTextScale, 0, 300)}
+              onPressIn={() => {
+                console.log("AcademyScreen: Attacking section: onPressIn detected. Starting visual feedback animation.");
+                animateSection(attackingOpacity, attackingTextScale, 1, 200);
+              }}
+              onPressOut={() => {
+                console.log("AcademyScreen: Attacking section: onPressOut detected. Reverting visual feedback animation.");
+                animateSection(attackingOpacity, attackingTextScale, 0, 300);
+              }}
               onPress={handleAttackingPress}
             >
               <Animated.View style={[styles.pressOverlay, { opacity: attackingOpacity }]} />
@@ -134,6 +175,7 @@ const AcademyScreen = React.forwardRef((props, ref) => {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             />
+            {console.log("AcademyScreen: Divider line rendered between sections.")}
           </View>
 
           {/* Bottom Half - Defending */}
@@ -143,7 +185,6 @@ const AcademyScreen = React.forwardRef((props, ref) => {
               style={styles.backgroundImage}
               resizeMode="cover"
             />
-            
             {/* Gradient Overlay for Better Text Readability */}
             <LinearGradient
               colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.2)']}
@@ -152,7 +193,7 @@ const AcademyScreen = React.forwardRef((props, ref) => {
 
             {/* Text Overlay */}
             <View style={styles.textContainer}>
-              <Animated.Text 
+              <Animated.Text
                 style={[
                   styles.sectionTitle,
                   styles.defendingTitle,
@@ -170,8 +211,14 @@ const AcademyScreen = React.forwardRef((props, ref) => {
             <TouchableOpacity
               style={styles.touchableContainer}
               activeOpacity={1}
-              onPressIn={() => animateSection(defendingOpacity, defendingTextScale, 1, 200)}
-              onPressOut={() => animateSection(defendingOpacity, defendingTextScale, 0, 300)}
+              onPressIn={() => {
+                console.log("AcademyScreen: Defending section: onPressIn detected. Starting visual feedback animation.");
+                animateSection(defendingOpacity, defendingTextScale, 1, 200);
+              }}
+              onPressOut={() => {
+                console.log("AcademyScreen: Defending section: onPressOut detected. Reverting visual feedback animation.");
+                animateSection(defendingOpacity, defendingTextScale, 0, 300);
+              }}
               onPress={handleDefendingPress}
             >
               <Animated.View style={[styles.pressOverlay, { opacity: defendingOpacity }]} />
@@ -194,7 +241,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   halfContainer: {
-    height: (height - 4) * 0.5, // Subtract divider height and split perfectly
+    height: (height - 4) * 0.5, // Subtract divider height and split
     width: '102%',
     justifyContent: 'center',
     left: -5,
