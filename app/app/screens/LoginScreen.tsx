@@ -22,6 +22,7 @@ const auth = getAuth(firebaseApp);
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
+  console.log("LoginScreen: Component mounted successfully.");
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,8 +31,9 @@ const LoginScreen = () => {
   const [googleAuthInProgress, setGoogleAuthInProgress] = useState(false);
   const [gmailHijackCount, setGmailHijackCount] = useState(0);
   const router = useRouter();
+  console.log("LoginScreen: State variables initialized.");
 
-  // 🔑 CRITICAL: Use your actual Android client ID
+  // 🔴 CRITICAL: Use your actual Android client ID
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     androidClientId: '313289431085-hfp2mt1cd7330b3k4n1k19hd4d9iq5i3.apps.googleusercontent.com',
     iosClientId: '313289431085-YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
@@ -41,107 +43,142 @@ const LoginScreen = () => {
       access_type: 'offline',
     },
   });
+  console.log("LoginScreen: Google ID Token Auth Request configured.");
 
   // Handle Google Auth Response with Smart Error Handling
   useEffect(() => {
+    console.log("LoginScreen: Google Auth useEffect triggered. Current response type: " + response?.type);
     if (response?.type === 'success') {
+      console.log("LoginScreen: Google Auth successful, ID token received.");
       setGoogleAuthInProgress(true);
+      console.log("LoginScreen: googleAuthInProgress state updated to true.");
       const { id_token } = response.params;
       if (id_token) {
+        console.log("LoginScreen: Processing ID token for Firebase login.");
         setTimeout(() => {
           router.replace("/");
+          console.log("LoginScreen: Navigating to HomeScreen after Google Auth success.");
           handleGoogleSignIn(id_token);
+          console.log("LoginScreen: Initiating Firebase Google Sign-In with received ID token.");
         }, 1500);
       }
     } else if (response?.type === 'dismiss') {
+      console.log("LoginScreen: Google Auth dismissed by user.");
       setGoogleAuthInProgress(false);
-      setGmailHijackCount(prev => prev + 1);
+      console.log("LoginScreen: googleAuthInProgress state updated to false.");
+      setGmailHijackCount(prev => {
+        const newCount = prev + 1;
+        console.log("LoginScreen: Gmail hijack count incremented to: " + newCount);
+        return newCount;
+      });
       if (gmailHijackCount === 0) {
+        console.log("LoginScreen: First Gmail redirection detected, showing user prompt.");
         Alert.alert(
-          "Almost there! 😊", 
+          "Almost there! 👋", 
           "Looks like you got redirected to Gmail. Just close Gmail and return here - your login will complete automatically!",
           [
-            { text: t('login_screen.try_again'), onPress: () => setLoading(false) },
-            { text: "Got it", onPress: () => setLoading(false) }
+            { text: t('login_screen.try_again'), onPress: () => {
+              setLoading(false);
+              console.log("LoginScreen: Alert 'Try Again' button pressed. Loading state reset.");
+            }},
+            { text: "Got it", onPress: () => {
+              setLoading(false);
+              console.log("LoginScreen: Alert 'Got it' button pressed. Loading state reset.");
+            }}
           ]
         );
       } else {
         // Second+ hijack - suggest alternatives
+        console.log("LoginScreen: Subsequent Gmail redirection, suggesting alternatives.");
         Alert.alert(
           "Let's try something else", 
           "Google login seems to be having issues on your device. Email signup is more reliable and just as quick!",
           [
-            { text: t('login_screen.try_again'), onPress: () => setLoading(false) },
-            { text: "Use Email Instead", onPress: () => {
+            { text: t('login_screen.try_again'), onPress: () => {
               setLoading(false);
+              console.log("LoginScreen: Alert 'Try Again' button pressed. Loading state reset.");
+            }},
+            { text: "Use Email Instead", onPress: () => {
+                setLoading(false);
+                console.log("LoginScreen: Alert 'Use Email Instead' button pressed. Loading state reset.");
             }}
           ]
         );
       }
     }
-    console.log("============================");
   }, [response, gmailHijackCount, t]);
 
   // Process Google Sign-In with Firebase
   const handleGoogleSignIn = async (idToken) => {
+    console.log("LoginScreen: handleGoogleSignIn started with ID Token.");
     try {
-      console.log("🔥 Processing Google ID Token with Firebase...");
-      
       const credential = GoogleAuthProvider.credential(idToken);
-      console.log("✅ Google credential created");
+      console.log("LoginScreen: Google credential created for Firebase.");
       
       const result = await signInWithCredential(auth, credential);
       const user = result.user;
       
-      console.log("🎉 Firebase Sign-In Successful!");
-      console.log("User ID:", user.uid);
-      console.log("User Email:", user.email);
-      console.log("User Name:", user.displayName);
+      console.log("LoginScreen: Firebase sign-in with Google successful for user: " + user.uid);
+      console.log("LoginScreen: User Email: " + user.email);
+      console.log("LoginScreen: User Name: " + user.displayName);
       
-      await createUserDocumentIfNotExists(user);
+      await createUpdateUserDocumentIfNotExist(user);
+      console.log("LoginScreen: Attempting to create/update user document for Google user.");
       
       setGoogleAuthInProgress(false);
+      console.log("LoginScreen: googleAuthInProgress state updated to false.");
       
       setTimeout(() => {
         Alert.alert(t('login_screen.success_title'), t('login_screen.login_success'));
+        console.log("LoginScreen: Displaying Google login success alert.");
       }, 500);
       
     } catch (error) {
-      console.error("❌ Firebase Sign-In Error:", error);
-      console.error("Error code:", error.code);
-      console.error("Error message:", error.message);
+      console.error("LoginScreen: Firebase Google Sign-In failed. Error code: " + error.code + ", message: " + error.message);
       
       setGoogleAuthInProgress(false);
+      console.log("LoginScreen: googleAuthInProgress state updated to false on error.");
       
       let errorMessage = t('login_screen.google_login_error_generic');
       if (error.code === 'auth/account-exists-with-different-credential') {
         errorMessage = t('login_screen.google_login_error_account_exists');
+        console.log("LoginScreen: Google login error: Account exists with different credential.");
       } else if (error.code === 'auth/invalid-credential') {
         errorMessage = t('login_screen.google_login_error_invalid_credential');
+        console.log("LoginScreen: Google login error: Invalid credential.");
       } else if (error.code === 'auth/operation-not-allowed') {
         errorMessage = t('login_screen.google_login_error_not_enabled');
+        console.log("LoginScreen: Google login error: Operation not allowed (e.g., Google sign-in not enabled).");
       } else if (error.message) {
         errorMessage = error.message;
+        console.log("LoginScreen: Google login error: Specific error message received.");
       }
       
       Alert.alert(t('login_screen.google_login_error'), errorMessage);
+      console.log("LoginScreen: Displaying Google login error alert.");
       router.replace("/screens/LoginScreen");
+      console.log("LoginScreen: Redirecting to LoginScreen after Google login error.");
     } finally {
       setLoading(false);
+      console.log("LoginScreen: Google login process completed (loading state reset).");
     }
   };
 
   // Create/Update User Document
-  const createUserDocumentIfNotExists = async (user) => {
-    if (!user) return;
+  const createUpdateUserDocumentIfNotExist = async (user) => {
+    console.log("LoginScreen: createUpdateUserDocumentIfNotExist started for user: " + (user ? user.uid : "undefined"));
+    if (!user) {
+      console.log("LoginScreen: createUpdateUserDocumentIfNotExist aborted, no user provided.");
+      return;
+    }
     
     try {
-      console.log("📝 Creating/updating user document...");
       const userRef = doc(db, "users", user.uid);
+      console.log("LoginScreen: Checking if user document exists for UID: " + user.uid);
       const userSnap = await getDoc(userRef);
       
       if (!userSnap.exists()) {
-        console.log("Creating new user document");
+        console.log("LoginScreen: User document not found, creating new one for UID: " + user.uid);
         await setDoc(userRef, {
           uid: user.uid,
           username: user.displayName || "Anonymous",
@@ -155,85 +192,98 @@ const LoginScreen = () => {
           remainingFreeAIQuestions: 3,
           dailyChallengeCoins: 0,
         });
-        console.log("✅ User document created for:", user.uid);
+        console.log("LoginScreen: New user document created for UID: " + user.uid);
       } else {
-        console.log("Updating existing user document");
+        console.log("LoginScreen: User document exists, updating last login for UID: " + user.uid);
         await updateDoc(userRef, { lastLogin: serverTimestamp() });
-        console.log("✅ User document updated for:", user.uid);
+        console.log("LoginScreen: Existing user document updated for UID: " + user.uid);
       }
     } catch (error) {
-      console.error("❌ Error creating/updating user document:", error);
+      console.error("LoginScreen: Error creating/updating user document: " + error.message);
     }
   };
 
   // Email/Password Login
   const handleLogin = async () => {
+    console.log("LoginScreen: handleLogin (email/password) initiated.");
     if (!email || !password) {
       Alert.alert(t('login_screen.error_title'), t('login_screen.error_empty_fields'));
+      console.log("LoginScreen: Email/Password login validation failed: empty fields.");
       return;
     }
     try {
       setLoading(true);
+      console.log("LoginScreen: Setting loading state to true for Email/Password login.");
       const user = await loginUser(email, password);
       if (user) {
-        await createUserDocumentIfNotExists(user);
+        console.log("LoginScreen: Email/Password login successful for user: " + email);
+        await createUpdateUserDocumentIfNotExist(user);
+        console.log("LoginScreen: Attempting to create/update user document for Email/Password user.");
         Alert.alert(t('login_screen.success_title'), t('login_screen.login_success'));
+        console.log("LoginScreen: Displaying Email/Password login success alert.");
         router.push("/");
+        console.log("LoginScreen: Navigating to HomeScreen after Email/Password login success.");
       } else {
         Alert.alert(t('login_screen.login_failed_title'), t('login_screen.login_failed'));
+        console.log("LoginScreen: Email/Password login failed: Invalid credentials.");
       }
     } catch (error) {
       Alert.alert(t('login_screen.login_error'), error.message || t('login_screen.login_error_generic'));
+      console.error("LoginScreen: Email/Password login encountered an error: " + error.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Google Login Handler
-  const handleGoogleLogin = async () => {
-    try {
-      console.log("🚀 Starting Google Login...");
-      setLoading(true);
-      
-      if (!request) {
-        console.log("❌ Google request not available");
-        Alert.alert(t('login_screen.configuration_error_title'), t('login_screen.configuration_error_message'));
-        setLoading(false);
-        return;
-      }
-
-      // Trigger Google Sign-In
-      console.log("🔄 Prompting Google Auth...");
-      await promptAsync();
-      
-    } catch (error) {
-      console.error("❌ Google Login Handler Error:", error);
-      Alert.alert(t('login_screen.google_login_error'), t('login_screen.google_login_error_generic'));
-      setLoading(false);
+      console.log("LoginScreen: Email/Password login process completed (loading state reset).");
     }
   };
 
   // Phone Login Placeholder
   const handlePhoneLogin = async () => {
+    console.log("LoginScreen: Phone login button pressed.");
     try {
       Alert.alert(t('login_screen.phone_login_title'), t('login_screen.phone_login_placeholder'));
+      console.log("LoginScreen: Displaying phone login placeholder alert.");
     } catch (error) {
       Alert.alert(t('login_screen.phone_login_error'), error.message || t('login_screen.login_error_generic'));
+      console.error("LoginScreen: Phone login encountered an error: " + error.message);
     }
   };
 
   // Facebook Login Placeholder
   const handleFacebookLogin = async () => {
+    console.log("LoginScreen: Facebook login button pressed.");
     try {
       Alert.alert(t('login_screen.facebook_login_title'), t('login_screen.facebook_login_placeholder'));
+      console.log("LoginScreen: Displaying Facebook login placeholder alert.");
     } catch (error) {
       Alert.alert(t('login_screen.facebook_login_error'), error.message || t('login_screen.login_error_generic'));
+      console.error("LoginScreen: Facebook login encountered an error: " + error.message);
     }
   };
 
+  const handleGoogleLogin = async () => {
+    console.log("LoginScreen: Google login button pressed.");
+    try {
+      console.log("LoginScreen: Starting Google Login prompt.");
+      setLoading(true);
+      if (!request) {
+        console.log("LoginScreen: Google request object not available.");
+        Alert.alert(t('login_screen.configuration_error_title'), t('login_screen.configuration_error_message'));
+        setLoading(false);
+        return;
+      }
+      console.log("LoginScreen: Prompting Google Auth...");
+      await promptAsync();
+    } catch (error) {
+      console.error("LoginScreen: Google Login Handler Error: " + error.message);
+      Alert.alert(t('login_screen.google_login_error'), t('login_screen.google_login_error_generic'));
+      setLoading(false);
+    }
+  };
+
+
   return (
     <>
-      <LinearGradient colors={["#0D0D0D", "#222222"]} style={styles.pageGradient}>
+      <LinearGradient colors={["#0DC0D2", "#222222"]} style={styles.pageGradient}>
         <Image
           source={require("../../assets/images/tactical.png")}
           style={styles.tacticalBg}
@@ -244,9 +294,9 @@ const LoginScreen = () => {
           <Text style={styles.welcomeText}>{t('login_screen.enter_tunnel')}</Text>
 
           <Image
-            source={require("../../assets/images/logo.png")}
-            style={styles.logo}
-            resizeMode="contain"
+              source={require("../../assets/images/logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
           />
 
           <Text style={styles.title}>{t('login_screen.app_title')}</Text>
@@ -260,7 +310,10 @@ const LoginScreen = () => {
               placeholder={t('login_screen.email_placeholder')}
               placeholderTextColor="#bbb"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                console.log("LoginScreen: Email input changed to: " + text);
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -272,10 +325,16 @@ const LoginScreen = () => {
                 placeholderTextColor="#bbb"
                 secureTextEntry={!showPassword}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  console.log("LoginScreen: Password input changed.");
+                }}
               />
               <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
+                onPress={() => {
+                  setShowPassword(!showPassword);
+                  console.log("LoginScreen: Show password toggled to: " + !showPassword);
+                }}
                 style={styles.eyeIcon}
               >
                 <Ionicons
@@ -316,7 +375,10 @@ const LoginScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity onPress={() => router.push("/screens/RegisterScreen")}>
+            <TouchableOpacity onPress={() => {
+              router.push("/screens/RegisterScreen");
+              console.log("LoginScreen: Navigate to RegisterScreen button pressed.");
+            }}>
               <Text style={styles.linkText}>{t('login_screen.create_account')}</Text>
             </TouchableOpacity>
           </LinearGradient>
@@ -333,7 +395,7 @@ const LoginScreen = () => {
       {/* Cool Loading Overlay for Google Authentication */}
       {googleAuthInProgress && (
         <View style={styles.loadingOverlay}>
-          <LinearGradient 
+          <LinearGradient
             colors={['rgba(13,13,13,0.95)', 'rgba(34,34,34,0.95)']} 
             style={styles.loadingGradient}
           >
