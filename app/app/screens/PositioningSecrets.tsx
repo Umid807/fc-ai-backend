@@ -3,8 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { useNavigation } from '@react-navigation/native';
 
 export default function PositioningSecrets() {
+  console.log("PositioningSecrets: Component mounted successfully.");
   const navigation = useNavigation();
+  console.log("PositioningSecrets: Initializing navigation hook.");
 
+  console.log("PositioningSecrets: Rendering ScrollView content.");
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Positioning Secrets for Elite Defending</Text>
@@ -30,8 +33,8 @@ export default function PositioningSecrets() {
 
       <Text style={styles.subtitle}>2. Read the Game</Text>
       <Text style={styles.paragraph}>
-        Anticipate where the ball will go next. Positioning isn’t just about reacting to the
-        current situation; it’s about predicting the opponent’s next move. Keep your head up,
+        Anticipate where the ball will go next. Positioning isn't just about reacting to the
+        current situation; it's about predicting the opponent's next move. Keep your head up,
         scan the field, and adjust accordingly.
       </Text>
 
@@ -43,7 +46,7 @@ export default function PositioningSecrets() {
 
       <Text style={styles.subtitle}>3. Control the Space</Text>
       <Text style={styles.paragraph}>
-        Don’t just mark players—control the space around them. Position yourself to block
+        Don't just mark players—control the space around them. Position yourself to block
         passing lanes, limit shooting opportunities, and force attackers into less dangerous
         areas of the pitch.
       </Text>
@@ -52,12 +55,16 @@ export default function PositioningSecrets() {
       <Text style={styles.paragraph}>
         Your positioning should change based on the threat level. When defending deep, stay
         compact. When pressing higher up the pitch, position yourself to cut off quick passing
-        options while still covering key spaces.
+        options while still covering key spaces of the pitch.
       </Text>
 
       {/* Back Button */}
-      <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
-        <Text style={styles.buttonText}>← Back</Text>
+      <TouchableOpacity style={styles.button} onPress={() => {
+        console.log("PositioningSecrets: Back button pressed.");
+        navigation.goBack();
+        console.log("PositioningSecrets: Navigating back to previous screen.");
+      }}>
+        <Text style={styles.buttonText}>⮨ Back</Text>
       </TouchableOpacity>
     </ScrollView>
   );
